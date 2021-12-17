@@ -175,25 +175,10 @@ def fixed_pt_iter_propagators_1pop(J, E, max_its=100, w=np.linspace(-200, 200, 2
     return w, Dnn_full, Dvn_full, Dnv_full, Dvv_full
 
 
-def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 200, 2**15), return_rate=False):
+def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 200, 2**15), return_rate=False, n_max=20):
 
     ### define the mean-field theory
-
-    n_max = 10
-    result1 = minimize_scalar(rate_fn_neg, args=(J, E))
-    
-    if result1.success and (result1.fun < 0):
-        
-        n_min = result1.x
-        result2 = root_scalar(rate_fn, args=(J, E), method='bisect', bracket=(n_min, n_max))
-        
-        if result2.converged:
-            r_th = result2.root
-        else:
-            r_th = np.nan
-        
-    else:
-        r_th = 0
+    r_th = lif_rate_homog(J, E, n_max=n_max)
 
     vbar = np.sqrt(J*r_th + E)
     if vbar > 1:
@@ -203,7 +188,6 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
         phibar = 0
         phi_pr = 0
         raise Exception('need positive rate')
-
 
     ### define the bare propagators
     Dnn = (1 + phibar +1j * w) / (1 + phibar + phi_pr * vbar + 1j*w)
@@ -242,7 +226,7 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
 
 def rate_1pop_1loop(J, E):
 
-    # self-consistent 1-loop approximation around the mean-field theory with the bare propagators
+    # 1-loop approximation around the mean-field theory with the bare propagators
     # assume a threshold-linear transfer function
 
     if ((J * (4-J)/4) < E) and (J > 2):

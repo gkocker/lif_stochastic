@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from plot_weak_coupling_single import fixed_pt_iter_propagators_1pop_true, phi, sim_lif_perturbation, create_spike_train, sim_lif_pop, rate_fn, rate_fn_neg
+from plot_weak_coupling_single import fixed_pt_iter_propagators_1pop_true, rate_fn, rate_fn_neg
 from scipy.optimize import minimize_scalar, root_scalar
 
 from scipy.signal import convolve, welch
+
+from src.model import phi
+from src.sim import create_spike_train, sim_lif_pop
+from src.theory import fixed_pt_iter_propagators_1pop_true, lif_rate_homog
 
 import seaborn as sns
 
@@ -117,22 +121,8 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
     ax[0, 1].plot(wsim*2*np.pi, Csim, 'ko', alpha=0.5)
 
     ### theory - rate
-    n_max = 10
-    result1 = minimize_scalar(rate_fn_neg, args=(J*(1-g), E))
-
-    if result1.success and (result1.fun < 0):
-
-        n_min = result1.x
-        result2 = root_scalar(rate_fn, args=(J*(1-g), E), method='bisect', bracket=(n_min, n_max))
-
-        if result2.converged:
-            r_th = result2.root
-        else:
-            r_th = np.nan
-
-    else:
-        r_th = 0
-        raise Exception('Need non-zero rate')
+    r_th = lif_rate_homog(J*(1-g), E)
+    if ~(r_th > 0): raise Exception('Need positive rate')
 
     ### theory - isi dist
     EJn = E + J*(1-g)*r_th
@@ -236,40 +226,31 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
 
     for gi, g in enumerate(grange_th):
 
-        result1 = minimize_scalar(rate_fn_neg, args=(J*(1-g), E)) # find the local maximum of n(n) - n
-        
-        if result1.success and (result1.fun < 0):
-            
-            n_min = result1.x
-            result2 = root_scalar(rate_fn, args=(J*(1-g), E), method='bisect', bracket=(n_min, n_max))
-            
-            if result2.converged:
-                r_th.append(result2.root)
+        r_th_i = lif_rate_homog(J*(1-g), E)
+        r_th.append(r_th_i)
+
+        if r_th_i > 0:
+
+            EJn = E + J*(1-g)*r_th_i
+            t0 = np.log(EJn) - np.log(EJn-1)
+            s0 = np.arange(t0, smax, ds)
+
+            p1 = EJn*(1-np.exp(-s0)) - 1
+            p2 = EJn*np.exp(-s0) + (EJn-1)*(s0-1-t0)
                 
-                EJn = E + J*(1-g)*result2.root
-                t0 = np.log(EJn) - np.log(EJn-1)
-                s0 = np.arange(t0, smax, ds)
+            p = np.zeros((len(s)))
+            p[s > t0-ds] = p1 * np.exp(-p2)
 
-                p1 = EJn*(1-np.exp(-s0)) - 1
-                p2 = EJn*np.exp(-s0) + (EJn-1)*(s0-1-t0)
-                    
-                p = np.zeros((len(s)))
-                p[s > t0-ds] = p1 * np.exp(-p2)
+            pw = np.fft.fft(p) # fourier transform of isi density
+            w = np.fft.fftfreq(len(s))*2*np.pi/ds
+            pw *= ds*np.exp(-complex(0,1)*w*smin) # phase factor
 
-                pw = np.fft.fft(p) # fourier transform of isi density
-                w = np.fft.fftfreq(len(s))*2*np.pi/ds
-                pw *= ds*np.exp(-complex(0,1)*w*smin) # phase factor
-
-                Cw = result2.root * (1 - np.abs(pw)**2) / (np.abs(1 - pw)**2)
-                var_spk.append(Cw[1]) # 0 is the delta peak
-
-            else:
-                r_th.append(np.nan)
-                var_spk.append(0)
+            Cw = r_th_i * (1 - np.abs(pw)**2) / (np.abs(1 - pw)**2)
+            var_spk.append(Cw[1]) # 0 is the delta peak
 
         else:
-            r_th.append(np.nan)
             var_spk.append(0)
+
 
     r_th = np.array(r_th)
     var_spk_tree = (np.sqrt(J*(1-grange_th)*r_th + E)-1) / 4    
@@ -332,44 +313,33 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
 
     r_th = []
     var_spk = []
-    n_max = 10
 
     for ei, E in enumerate(Erange_th):
 
-        result1 = minimize_scalar(rate_fn_neg, args=(J*(1-g), E)) # find the local maximum of n(n) - n
-        
-        if result1.success and (result1.fun < 0):
+        r_th_i = lif_rate_homog(J*(1-g), E)
+        r_th.append(r_th_i)
+
+        if r_th_i > 0:
             
-            n_min = result1.x
-            result2 = root_scalar(rate_fn, args=(J*(1-g), E), method='bisect', bracket=(n_min, n_max))
-            
-            if result2.converged:
-                r_th.append(result2.root)
+            EJn = E + J*(1-g)*r_th_i
+            t0 = np.log(EJn) - np.log(EJn-1)
+            s0 = np.arange(t0, smax, ds)
+
+            p1 = EJn*(1-np.exp(-s0)) - 1
+            p2 = EJn*np.exp(-s0) + (EJn-1)*(s0-1-t0)
                 
-                EJn = E + J*(1-g)*result2.root
-                t0 = np.log(EJn) - np.log(EJn-1)
-                s0 = np.arange(t0, smax, ds)
+            p = np.zeros((len(s)))
+            p[s > t0-ds] = p1 * np.exp(-p2)
 
-                p1 = EJn*(1-np.exp(-s0)) - 1
-                p2 = EJn*np.exp(-s0) + (EJn-1)*(s0-1-t0)
-                    
-                p = np.zeros((len(s)))
-                p[s > t0-ds] = p1 * np.exp(-p2)
+            pw = np.fft.fft(p) # fourier transform of isi density
+            w = np.fft.fftfreq(len(s))*2*np.pi/ds
+            pw *= ds*np.exp(-complex(0,1)*w*smin) # phase factor
 
-                pw = np.fft.fft(p) # fourier transform of isi density
-                w = np.fft.fftfreq(len(s))*2*np.pi/ds
-                pw *= ds*np.exp(-complex(0,1)*w*smin) # phase factor
-
-                Cw = result2.root * (1 - np.abs(pw)**2) / (np.abs(1 - pw)**2)
-                var_spk.append(Cw[1]) # 0 is the delta peak
-
-            else:
-                r_th.append(np.nan)
-                var_spk.append(np.nan)
+            Cw = r_th_i * (1 - np.abs(pw)**2) / (np.abs(1 - pw)**2)
+            var_spk.append(Cw[1]) # 0 is the delta peak
 
         else:
-            r_th.append(0)
-            var_spk.append(0)
+            var_spk.append(np.nan)
 
     r_th = np.array(r_th)
     var_spk = np.array(var_spk)
@@ -428,22 +398,8 @@ def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
     ax[0, 0].plot(w, np.abs(Dnv_full), '--', linewidth=2, color=colors[2], label=r'$\Delta_{\dot{n}, \tilde{v}}$')
     ax[0, 0].plot(w, np.abs(Dvv_full), linewidth=2, color=colors[3], label=r'$\Delta_{v, \tilde{v}}$')   
 
-    n_max = 10
-    result1 = minimize_scalar(rate_fn_neg, args=(J*(1-g), E))
-
-    if result1.success and (result1.fun < 0):
-
-        n_min = result1.x
-        result2 = root_scalar(rate_fn, args=(J*(1-g), E), method='bisect', bracket=(n_min, n_max))
-
-        if result2.converged:
-            r_th = result2.root
-        else:
-            r_th = np.nan
-
-    else:
-        r_th = 0
-        raise Exception('Need non-zero rate')
+    r_th = lif_rate_homog(J*(1-g), E)
+    if ~(r_th > 0): raise Exception('Need non-zero rate')
 
     vbar = np.sqrt(J*r_th + E)
     if vbar > 1:
@@ -522,7 +478,7 @@ def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
     ax[2, 0].imshow(np.abs(Dnv_diff), clim=(0, cmax), extent=(Jmin-dJ/2, Jmax-dJ/2, Emin-dE/2, Emax-dE/2), cmap='cividis', origin='lower', aspect='auto')
     ax[2, 1].imshow(np.abs(Dvv_diff), clim=(0, cmax), extent=(Jmin-dJ/2, Jmax-dJ/2, Emin-dE/2, Emax-dE/2), cmap='cividis', origin='lower', aspect='auto')
 
-    # fig.colorbar(im, ax=ax[1:, 1], shrink=0.6)
+    fig.colorbar(im, ax=ax[1:, 1], shrink=0.6)
 
     ax[1, 0].set_title('Spike-spike, '+r'$\Delta_{\dot{n}, \tilde{n}}$', fontsize=fontsize)
     ax[1, 1].set_title('Voltage-spike, '+r'$\Delta_{v, \tilde{n}}$', fontsize=fontsize)
@@ -538,6 +494,8 @@ def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
     fig.tight_layout()
     fig.savefig(savefile)
 
+
 if __name__ == '__main__':
-    # plot_ei_corrs()
+    plot_ei_corrs()
+
     plot_propagators_resum()

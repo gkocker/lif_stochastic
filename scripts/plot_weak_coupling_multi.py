@@ -5,7 +5,6 @@ from scipy.optimize import root_scalar, minimize_scalar
 from scipy.ndimage import gaussian_filter
 import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mpl_toolkits.axes_grid1 import ImageGrid
 from matplotlib.gridspec import GridSpec
 
 from src.model import phi
@@ -27,6 +26,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile='fig3.pdf'):
     gs = GridSpec(2, nrows, figure=fig)
 
     ax1 = fig.add_subplot(gs[0, :nrows//2])
+
     ### E-J phase diagram
 
     Npts = 1000
@@ -51,9 +51,9 @@ def plot_fig_exc_inh_weakly_coupled(savefile='fig3.pdf'):
     ax1.text(s='L', x=1.5, y=0.4, fontsize=fontsize, verticalalignment='center')
     ax1.text(s='L\nor\nB', x=5., y=.5, fontsize=fontsize, verticalalignment='center')
 
-    # divider = make_axes_locatable(ax1)
-    # cax = divider.append_axes('right', size='5%', pad=0.01)
-    # fig.colorbar(im, cax=cax, orientation='vertical', label='Max g for B', drawedges=False, ticks=[0, 0.3, 0.6])
+    divider = make_axes_locatable(ax1)
+    cax = divider.append_axes('right', size='5%', pad=0.01)
+    fig.colorbar(im, cax=cax, orientation='vertical', label='Max g for B', drawedges=False, ticks=[0, 0.3, 0.6])
 
     # cax = fig.add_subplot(gs[0, nrows//2])
     # plt.colorbar(im, cax=cax, label='Max g for B', drawedges=False, ticks=[0, 0.6], shrink=0.9)

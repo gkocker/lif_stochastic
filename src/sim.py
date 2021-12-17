@@ -1,5 +1,5 @@
 import numpy as np
-
+from src.model import phi
 
 def sim_pif(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1):
 
@@ -119,6 +119,13 @@ def sim_lif_pop_fully_connected(J, E, N=1000, tstop=100, dt=.01, B=1, v_th=1, p=
 
 def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, perturb_start=None, perturb_len=10, perturb_amp=1.5, perturb_ind=None):
 
+    '''
+    simulate an LIF network. at times tstop/4 a postive perturbation is applied, and at 3/4 tstop a negative perturbation
+
+    J: connectivity matrix, NxN
+    E: resting potential
+    '''
+
     Nt = int(tstop / dt)
 
     if len(np.shape(J)) > 1:
@@ -183,6 +190,15 @@ def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, pertu
 
 def sim_lif_perturbation_x(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, perturb_amp=1.5, perturb_ind=None):
 
+    '''
+    simulate an LIF network. the resting potential E undergoes a series of step perturbations.
+    
+    J: connectivity matrix, NxN
+    E: resting potential
+    perturb_amp: list of step amplitudes
+    perturb_ind: indices of neurons that experience the perturbation
+    '''
+
     Nt = int(tstop / dt)
 
     if len(np.shape(J)) > 1:
@@ -217,64 +233,6 @@ def sim_lif_perturbation_x(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, per
         E = E0.copy()
         if t > perturb_len:
             E[perturb_ind] += perturb_amp[(t - perturb_len) // perturb_len]
-
-        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + np.dot(J, n)
-
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
-        lam[lam > 1/dt] = 1/dt
-            
-        n = np.random.binomial(n=1, p=dt*lam)
-
-        spkind = np.where(n > 0)[0]
-        for i in spkind:
-            spktimes.append([t*dt, i])
-            
-    spktimes = np.array(spktimes)
-    return v, spktimes
-
-
-def sim_lif_perturbation_two(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, perturb_len=10, perturb_amp=(1.5, 3), perturb_ind=None):
-
-    Nt = int(tstop / dt)
-
-    if len(np.shape(J)) > 1:
-        N = np.shape(J)[0]
-    else:
-        N = 1
-    
-    if len(np.shape(E)) == 0:
-        E0 = E * np.ones(N,)
-    elif len(E) == N:
-        E0 = np.array(E)
-    else:
-        raise Exception('Need either a scalar or length N input E')
-
-    print(E0.shape)
-    print(perturb_amp)
-
-    if perturb_ind is None:
-        perturb_ind = range(N)
-
-    t_start_perturb1 = Nt//3
-    t_end_perturb1 = t_start_perturb1 + int(perturb_len / dt)
-    
-    t_start_perturb2 = 2*Nt//3
-    t_end_perturb2 = t_start_perturb2 + int(perturb_len / dt)
-    
-
-    v = np.zeros((Nt,N))
-    v[0] = np.random.rand(N,)
-    n = np.zeros(N,)
-    spktimes = []
-
-    for t in range(1, Nt):
-        
-        E = E0.copy()
-
-        if (t >= t_start_perturb1) and (t < t_end_perturb1):
-            E[perturb_ind] += perturb_amp[0]
-        elif (t >= t_start_perturb2) and (t < t_end_perturb2):
-            E[perturb_ind] += perturb_amp[1]
 
         v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + np.dot(J, n)
 
