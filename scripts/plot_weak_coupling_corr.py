@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from plot_weak_coupling_single import fixed_pt_iter_propagators_1pop_true, rate_fn, rate_fn_neg
-from scipy.optimize import minimize_scalar, root_scalar
+from src.theory import lif_rate_homog, fixed_pt_iter_propagators_1pop_true
+from src.sim import sim_lif_pop, create_spike_train
 
-from scipy.signal import convolve, welch
+from scipy.signal import welch
 
-from src.model import phi
 from src.sim import create_spike_train, sim_lif_pop
 from src.theory import fixed_pt_iter_propagators_1pop_true, lif_rate_homog
 
@@ -78,7 +77,7 @@ def calc_avg_isi_cv2(spktimes, N=None):
     return np.mean(cv_isi)    
 
 
-def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
+def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2):
 
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
@@ -122,7 +121,7 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
 
     ### theory - rate
     r_th = lif_rate_homog(J*(1-g), E)
-    if ~(r_th > 0): raise Exception('Need positive rate')
+    if not (r_th > 0): raise Exception('Need positive rate')
 
     ### theory - isi dist
     EJn = E + J*(1-g)*r_th
@@ -222,8 +221,6 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
     r_th = []
     var_spk = []
 
-    n_max = 20
-
     for gi, g in enumerate(grange_th):
 
         r_th_i = lif_rate_homog(J*(1-g), E)
@@ -250,7 +247,6 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
 
         else:
             var_spk.append(0)
-
 
     r_th = np.array(r_th)
     var_spk_tree = (np.sqrt(J*(1-grange_th)*r_th + E)-1) / 4    
@@ -383,7 +379,7 @@ def plot_ei_corrs(savefile='fig_corrs.pdf', gbounds=(0, .75), Emax=2):
     fig.savefig(savefile)
 
 
-def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
+def plot_propagators_resum(savefile='../results/fig_propagators.pdf', Nvec=50):
     
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(3.4, 5))
 
@@ -398,8 +394,8 @@ def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
     ax[0, 0].plot(w, np.abs(Dnv_full), '--', linewidth=2, color=colors[2], label=r'$\Delta_{\dot{n}, \tilde{v}}$')
     ax[0, 0].plot(w, np.abs(Dvv_full), linewidth=2, color=colors[3], label=r'$\Delta_{v, \tilde{v}}$')   
 
-    r_th = lif_rate_homog(J*(1-g), E)
-    if ~(r_th > 0): raise Exception('Need non-zero rate')
+    r_th = lif_rate_homog(J*(1-g), E, n_max=10)
+    if not (r_th > 0): raise Exception('Need non-zero rate')
 
     vbar = np.sqrt(J*r_th + E)
     if vbar > 1:
@@ -496,6 +492,7 @@ def plot_propagators_resum(savefile='fig_propagators.pdf', Nvec=50):
 
 
 if __name__ == '__main__':
-    plot_ei_corrs()
 
+    plot_ei_corrs()
+    
     plot_propagators_resum()

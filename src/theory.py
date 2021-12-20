@@ -1,6 +1,7 @@
 import numpy as np
 import mpmath
 from scipy.optimize import root_scalar, minimize_scalar, fsolve
+from scipy.signal import fftconvolve
 from src.model import phi
 
 def dv_mft_pif(v, J, E, B=1, v_th=1, p=1):
