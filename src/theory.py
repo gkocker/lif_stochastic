@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.optimize import root_scalar, minimize_scalar
+import mpmath
+from scipy.optimize import root_scalar, minimize_scalar, fsolve
 from src.model import phi
 
 def dv_mft_pif(v, J, E, B=1, v_th=1, p=1):
@@ -37,8 +38,6 @@ def lif_linear_1loop_fI(Erange, B=1, v_th=1, p=1):
 
     vbar_pos = vbar.copy() - v_th
     vbar_pos[vbar_pos < 0] = 0
-
-    phi1 = p*vbar_pos**(p-1)
 
     return phibar, phibar + 1/(8 * np.pi) * vbar_pos/vbar
 
@@ -79,6 +78,7 @@ def lif_linear_loop_fI(Erange, B=1, v_th=1, p=1):
 def rate_fn(n, J, E):
 
     if n < 0: n = 0 
+
     EJn = E + J*n - 1
 
     try:
@@ -94,6 +94,7 @@ def rate_fn(n, J, E):
 def rate_fn_neg(n, J, E):
 
     if n < 0: n = 0 
+
     EJn = E + J*n - 1
 
     try:
@@ -106,8 +107,10 @@ def rate_fn_neg(n, J, E):
     return np.real(n - rhs)
 
 
-def lif_linear_full(Erange, J=0, eps=1e-6):
+def lif_linear_full_fI(Erange, J=0, eps=1e-6):
+    
     '''
+    f-I curve
     exact firing rate with a threshold-linear transfer function (non-dim. for reset at 0 and threshold at 1)
     '''
 
@@ -227,7 +230,7 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
 def rate_1pop_1loop(J, E):
 
     # 1-loop approximation around the mean-field theory with the bare propagators
-    # assume a threshold-linear transfer function
+    # assume a threshold-linear transfer function with gain 1
 
     if ((J * (4-J)/4) < E) and (J > 2):
         vbar = (J + np.sqrt(J**2 + 4*(E-J))) / 2
@@ -256,7 +259,6 @@ def rate_1pop_1loop(J, E):
 def lif_rate_homog(J, E, n_max=20):
 
     result1 = minimize_scalar(rate_fn_neg, args=(J, E)) # find the local maximum of n(n) - n
-    
     if result1.success and (result1.fun < 0):
         
         n_min = result1.x

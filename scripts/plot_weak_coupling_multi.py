@@ -18,7 +18,7 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
 
-def plot_fig_exc_inh_weakly_coupled(savefile='fig3.pdf'):
+def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig../results/fig3.pdf'):
 
     # fig, ax = plt.subplots(2, 9, figsize=(3.4, 3.7))
     fig = plt.figure(figsize=(3.4, 3.7))
@@ -185,7 +185,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile='fig3.pdf'):
     fig.savefig(savefile)
 
 
-def plot_fig_exc_inh_bifurcation(savefile='fig3_bif.pdf', gbounds=(0, 1.8), Emax=2, eps=1e-11):    
+def plot_fig_exc_inh_bifurcation(savefile='../results/fig../results/fig3_bif.pdf', gbounds=(0, 1.8), Emax=2, eps=1e-11):    
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
@@ -443,7 +443,7 @@ def phase_plane_plot(model, ax, range_x = (-1,1), range_y = None,
     ax.contour(grid[0], grid[1], dfmat[:, :, 1], [0], colors=colors[2], label='I')
 
 
-def plot_fig_exc_inh_asymmetric_input(savefile='fig4.pdf'):
+def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
 
 
     fig = plt.figure(figsize=(3.4, 3.7))
@@ -557,7 +557,7 @@ def plot_fig_exc_inh_asymmetric_input(savefile='fig4.pdf'):
     return None
 
 
-def plot_fig_paradoxical_response(savefile='fig5.pdf'):
+def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
 
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
@@ -613,7 +613,7 @@ def plot_fig_paradoxical_response(savefile='fig5.pdf'):
     perturb_len = tstop // (Nperturb + 1)
 
     Npts = 12
-    simfile = 'sim_paradox_loop_g_E_J={}_perturb_amp={}_Npts={}.pkl'.format(J, perturb_amp[0], Npts)
+    simfile = '../results/sim_paradox_loop_g_E_J={}_perturb_amp={}_Npts={}.pkl'.format(J, perturb_amp[0], Npts)
 
     if os.path.exists(simfile):
         with open(simfile, 'rb') as f:
@@ -702,7 +702,7 @@ def plot_fig_paradoxical_response(savefile='fig5.pdf'):
     ### sims for E vs J
     Npts = 12
 
-    simfile = 'sim_paradox_loop_J_E_g={}_perturb_amp={}_Npts={}.pkl'.format(g, perturb_amp[0], Npts)
+    simfile = '../results/sim_paradox_loop_J_E_g={}_perturb_amp={}_Npts={}.pkl'.format(g, perturb_amp[0], Npts)
     if os.path.exists(simfile):
         with open(simfile, 'rb') as f:
             results = pickle.load(f)
@@ -794,5 +794,5 @@ if __name__ == '__main__':
 
     # plot_fig_exc_inh_bifurcation()
 
-    plot_fig_exc_inh_asymmetric_input(savefile='fig4_raster.png')
-    # plot_fig_paradoxical_response(savefile='fig5_cbar.pdf')
+    plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4_raster.png')
+    # plot_fig_paradoxical_response(savefile='../results/fig5_cbar.pdf')

@@ -141,7 +141,7 @@ def plot_fig_single_pop_bifurcation(savefile='../results/fig2_bif.pdf', Jbounds=
 
     fig, ax = plt.subplots(2, 1, figsize=(2, 3.7))
 
-    E = 1.5
+    E = .5
     connection_prob = 0.5
     N = 100
     tstop = 500
@@ -169,11 +169,16 @@ def plot_fig_single_pop_bifurcation(savefile='../results/fig2_bif.pdf', Jbounds=
         else:
             r_sim_stim.append(np.nan)
 
-    Jrange_th1 = np.linspace(Jmin, 2*(1+np.sqrt(1-E))-.01, 5)
-    Jrange_th2 = np.arange(2*(1+np.sqrt(1-E))-.01, Jmax, .005)
-    Jrange_th = np.concatenate((Jrange_th1, Jrange_th2))
+
+    if E >= 1:
+        Jrange_th = np.arange(Jmin, Jmax, .005)
+    else:
+        Jrange_th1 = np.linspace(Jmin, 2*(1+np.sqrt(1-E))-.01, 5)
+        Jrange_th2 = np.arange(2*(1+np.sqrt(1-E))-.01, Jmax, .005)
+        Jrange_th = np.concatenate((Jrange_th1, Jrange_th2))
 
     r_th = [lif_rate_homog(g, E) for g in Jrange_th]
+    print(r_th)
 
     r_mft_low = 0 * Jrange_th
     v_mft_high = 0 * Jrange_th
