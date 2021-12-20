@@ -10,6 +10,7 @@ from matplotlib.gridspec import GridSpec
 from src.model import phi
 from src.theory import rate_fn, rate_fn_neg
 from src.sim import sim_lif_perturbation, sim_lif_perturbation_x, sim_lif_pop, create_spike_train
+from src.phase_plane import dv, phase_plane_plot
 
 fontsize = 10
 labelsize = 9
@@ -17,8 +18,11 @@ labelsize = 9
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
+root_dir = '/Users/gabeo/Documents/projects/path_lif'
+results_dir = os.path.join(root_dir, 'results')
 
-def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig3.pdf'):
+
+def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.pdf')):
 
     # fig, ax = plt.subplots(2, 9, figsize=(3.4, 3.7))
     fig = plt.figure(figsize=(3.4, 3.7))
@@ -182,7 +186,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig3.pdf'):
     fig.savefig(savefile)
 
 
-def plot_fig_exc_inh_bifurcation(savefile='../results/fig3_bif.pdf', gbounds=(0, 1.8), Emax=2, eps=1e-11):    
+def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifurcation.pdf'), gbounds=(0, 1.8), Emax=2, eps=1e-11):    
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
@@ -349,98 +353,7 @@ def plot_fig_exc_inh_bifurcation(savefile='../results/fig3_bif.pdf', gbounds=(0,
     fig.savefig(savefile)
 
 
-def dv(v, E, J, g, p=1):
-    
-    if len(E) == 1:
-        Ee = E
-        Ei = E
-    elif len(E) == 2:
-        Ee, Ei = E
-    else:
-        raise Exception('input E has length {}, needs to be 1 or 2'.format(len(E)))
-    
-    ve, vi = v
-    
-    dve = -ve - ve*phi(ve) + J*phi(ve, p=p) - g*J*phi(vi, p=p) + Ee
-    dvi = -vi - vi*phi(vi) + J*phi(ve, p=p) - g*J*phi(vi, p=p) + Ei
-    
-    return np.array([dve, dvi])
-
-
-def dv_wc(v):
-    
-    if len(E) == 1:
-        Ee = E
-        Ei = E
-    elif len(E) == 2:
-        Ee, Ei = E
-    else:
-        raise Exception('input E has length {}, needs to be 1 or 2'.format(len(E)))
-    
-    ve, vi = v
-    
-    dve = -ve + J*phi(ve, p=p) - g*J*phi(vi, p=p) + Ee
-    dvi = -vi + J*phi(ve, p=p) - g*J*phi(vi, p=p) + Ei
-    
-    return np.array([dve, dvi])
-
-
-def phase_plane_plot(model, ax, range_x = (-1,1), range_y = None,
-                     num_grid_points = 50, num_quiv_points = None, show = False, E=(2, 2), g=0.5, J=6):
-    '''
-    Simple implementation of the phase plane plot in matplotlib.
-    
-    Input:
-    -----
-      *model* : function
-        function that takes numpy.array as input with two elements
-        representing two state variables
-      *range_x* = (-1, 1) : tuple
-        range of x axis
-      *range_y* = None : tuple
-        range of y axis; if None, the same range as *range_x*
-      *num_grid_points* = 50 : int
-        number of samples on grid
-      *show* = False : bool
-        if True it shows matplotlib plot
-    '''
-    if range_y is None:
-        range_y = range_x
-    
-    if num_quiv_points is None:
-        num_quiv_points = num_grid_points
-    
-    x_ = np.linspace(range_x[0], range_x[1], num_quiv_points)                                                             
-    y_ = np.linspace(range_y[0], range_y[1], num_quiv_points)                                                             
-
-    grid = np.meshgrid(x_, y_)
-
-    dfmat = np.zeros((num_quiv_points, num_quiv_points, 2))
-    for nx in range(num_quiv_points):
-        for ny in range(num_quiv_points):
-            df = model([grid[0][nx,ny], grid[1][nx,ny]], E=E, J=J, g=g)
-            dfmat[nx, ny, 0] = df[0]
-            dfmat[nx, ny, 1] = df[1]
-
-    ax.quiver(grid[0], grid[1], dfmat[:, :, 0], dfmat[:, :, 1], headwidth=5)    
-    
-    x_ = np.linspace(range_x[0], range_x[1], num_grid_points)                                                             
-    y_ = np.linspace(range_y[0], range_y[1], num_grid_points)                                                             
-
-    grid = np.meshgrid(x_, y_)
-
-    dfmat = np.zeros((num_grid_points, num_grid_points, 2))
-    for nx in range(num_grid_points):
-        for ny in range(num_grid_points):
-            df = model([grid[0][nx,ny], grid[1][nx,ny]], E=E, J=J, g=g)
-            dfmat[nx, ny, 0] = df[0]
-            dfmat[nx, ny, 1] = df[1]
-    
-    ax.contour(grid[0], grid[1], dfmat[:, :, 0], [0], colors=colors[1], label='E')
-    ax.contour(grid[0], grid[1], dfmat[:, :, 1], [0], colors=colors[2], label='I')
-
-
-def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
+def plot_fig_paradoxical_response_example(Ne=500, Ni=200, pE=0.5, pI=0.8, J=6, g=0.5, E=2, tstop=200, dt=.01, savefile=os.path.join(results_dir, 'fig_paradox_example.pdf')):
 
 
     fig = plt.figure(figsize=(3.4, 3.7))
@@ -449,20 +362,7 @@ def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
     ax1 = fig.add_subplot(gs[1, :])
 
     ### example paradoxical response from monostable regime
-    J = 6
-    g = 0.5
-    E = 2
-
-    p = 1
-    pE = 0.5
-    pI = 0.8
-
-    Ne = 500
-    Ni = 200
     N = Ne + Ni
-
-    tstop = 200
-    dt = .01
 
     perturb_ind = range(Ne, N)
     perturb_len = int(tstop / 3)
@@ -477,34 +377,27 @@ def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
     ax1.plot(spktimes[:, 0]-50, spktimes[:, 1], 'k|', markersize=.1)
 
     Nt = int(tstop/dt)
-    spk_e = np.zeros(Nt,)
     spk_i = np.zeros(Nt,)
-
-    for i in range(Ne):
-        spk_e += create_spike_train(spktimes, neuron=i, dt=dt, tstop=tstop)
 
     for i in range(Ne, N):
         spk_i += create_spike_train(spktimes, neuron=i, dt=dt, tstop=tstop)
 
-    r_e = gaussian_filter(spk_e, sigma=2/dt) / N
     r_i = gaussian_filter(spk_i, sigma=2/dt) / N
 
     ax2 = ax1.twinx()
     tplot = np.arange(-50, tstop-50, dt)
-    # ax2.plot(tplot, r_e, linewidth=2, label='exc.', color=colors[1])
     ax2.plot(tplot, r_i, linewidth=2, label='inh.', color=colors[2])
 
-    # t_start_perturb1 = Nt//3
-    # t_end_perturb1 = t_start_perturb1 + int(perturb_len / dt)
+    t_start_perturb1 = Nt//3
+    t_end_perturb1 = t_start_perturb1 + int(perturb_len / dt)
     
-    # t_start_perturb2 = 2*Nt//3
-    # t_end_perturb2 = t_start_perturb2 + int(perturb_len / dt)
+    t_start_perturb2 = 2*Nt//3
     
-    # scale = 40
-    # Eplot = (N + scale) * np.ones((Nt,))
-    # Eplot[t_start_perturb1:t_end_perturb1] += scale*1.5
-    # Eplot[t_end_perturb1:] += scale*3
-    # ax1.plot(tplot, Eplot, 'k', linewidth=2)
+    scale = 40
+    Eplot = (N + scale) * np.ones((Nt,))
+    Eplot[t_start_perturb1:t_end_perturb1] += scale*1.5
+    Eplot[t_end_perturb1:] += scale*3
+    ax1.plot(tplot, Eplot, 'k', linewidth=2)
 
     ax2.set_ylabel('Rate ({} spk / ms'.format(r'$\tau$'))
 
@@ -532,20 +425,15 @@ def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
     E = (2, 2)
     phase_plane_plot(dv, ax3, range_x=range_x, show=True, num_grid_points=200, num_quiv_points=7, E=E, J=J, g=g)
 
-    # E = (2, 3)
-    # phase_plane_plot(dv, ax3, range_x=range_x, show=True, num_grid_points=200, num_quiv_points=0, E=E, J=J, g=g)
-
     E = (2, 5)
     phase_plane_plot(dv, ax3, range_x=range_x, show=True, num_grid_points=200, num_quiv_points=0, E=E, J=J, g=g)
 
     ax3.text(x=3.5, y=2.9, s=r'$E_i=2$', fontsize=fontsize)
     ax3.text(x=3.5, y=3.5, s=r'$E_i=5$', fontsize=fontsize)
 
-
     ax3.set_xlabel(r'$v_e$', fontsize=fontsize)
     ax3.set_ylabel(r'$v_i$', fontsize=fontsize)
     sns.despine(ax=ax3)
-
 
     fig.tight_layout()
     fig.savefig(savefile, dpi=600)
@@ -554,7 +442,7 @@ def plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4.pdf'):
     return None
 
 
-def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
+def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=.01, trans=10, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
 
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
@@ -591,18 +479,7 @@ def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
 
     ### sims for paradoxical response
     J = 4
-
-    p = 1
-    pE = 0.5
-    pI = 0.8
-
-    Ne = 500
-    Ni = 200
     N = Ne + Ni
-
-    tstop = 200
-    dt = .01
-    trans = 10
 
     perturb_ind = range(Ne, N)
     perturb_amp = (0.1, )
@@ -610,7 +487,7 @@ def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
     perturb_len = tstop // (Nperturb + 1)
 
     Npts = 12
-    simfile = '../results/sim_paradox_loop_g_E_J={}_perturb_amp={}_Npts={}.pkl'.format(J, perturb_amp[0], Npts)
+    simfile = os.path.join(results_dir, 'sim_paradox_loop_g_E_J={}_perturb_amp={}_Npts={}.pkl'.format(J, perturb_amp[0], Npts))
 
     if os.path.exists(simfile):
         with open(simfile, 'rb') as f:
@@ -699,7 +576,7 @@ def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
     ### sims for E vs J
     Npts = 12
 
-    simfile = '../results/sim_paradox_loop_J_E_g={}_perturb_amp={}_Npts={}.pkl'.format(g, perturb_amp[0], Npts)
+    simfile = os.path.join(results_dir, 'sim_paradox_loop_J_E_g={}_perturb_amp={}_Npts={}.pkl'.format(g, perturb_amp[0], Npts))
     if os.path.exists(simfile):
         with open(simfile, 'rb') as f:
             results = pickle.load(f)
@@ -786,10 +663,11 @@ def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
 
 
 if __name__ == '__main__':
+
     plot_fig_exc_inh_weakly_coupled()
 
     plot_fig_exc_inh_bifurcation()
 
-    plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4_raster.png')
+    plot_fig_paradoxical_response_example()
 
-    plot_fig_paradoxical_response(savefile='../results/fig5_cbar.pdf')
+    plot_fig_paradoxical_response()

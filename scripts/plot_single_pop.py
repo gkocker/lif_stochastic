@@ -13,8 +13,10 @@ labelsize = 9
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
+root_dir = '/Users/gabeo/Documents/projects/path_lif'
+results_dir = os.path.join(root_dir, 'results')
 
-def plot_fig_single_pop_weakly_coupled(savefile='../results/fig2.png', Jmax=10, Emax=2):
+def plot_fig_single_pop_weakly_coupled(savefile='../results/fig_homog.png', Jmax=10, Emax=2):
 
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
@@ -137,7 +139,7 @@ def plot_fig_single_pop_weakly_coupled(savefile='../results/fig2.png', Jmax=10, 
     fig.savefig(savefile, dpi=600)
 
 
-def plot_fig_single_pop_bifurcation(savefile='../results/fig2_bif.pdf', Jbounds=(.5, 5.5), Emax=2, eps=1e-11):    
+def plot_fig_single_pop_bifurcation(savefile='../results/fig_homog_bif.pdf', Jbounds=(.5, 5.5), Emax=2, eps=1e-11):    
 
     fig, ax = plt.subplots(2, 1, figsize=(2, 3.7))
 

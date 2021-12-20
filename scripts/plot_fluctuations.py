@@ -1,20 +1,20 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
+from scipy.signal import welch
+import seaborn as sns
+
 from src.theory import lif_rate_homog, fixed_pt_iter_propagators_1pop_true
 from src.sim import sim_lif_pop, create_spike_train
-
-from scipy.signal import welch
-
-from src.sim import create_spike_train, sim_lif_pop
-from src.theory import fixed_pt_iter_propagators_1pop_true, lif_rate_homog
-
-import seaborn as sns
 
 fontsize = 10
 labelsize = 8
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
+
+root_dir = '/Users/gabeo/Documents/projects/path_lif'
+results_dir = os.path.join(root_dir, 'results')
 
 def calc_avg_spectrum(spktimes, N=None, tstop=None, dt=.01):
 
@@ -77,7 +77,7 @@ def calc_avg_isi_cv2(spktimes, N=None):
     return np.mean(cv_isi)    
 
 
-def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2):
+def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Estim=10, savefile=os.path.join(results_dir, 'fig_corrs.pdf'), gbounds=(0, .75), Emax=2):
 
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
@@ -86,17 +86,9 @@ def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2)
     J = 6
     E = 1.2
 
-    Estim = 10
-    tstim = 10
-    tstop = 500 + 2*tstim # want low freq
-    dt = 0.001 # want high freq also
-
-    Ne = 200
-    Ni = 50
+    dt = .001 # want high freq
+    tstop = tstop + 2*tstim # want low freq
     N = Ne + Ni
-
-    pE = 0.5
-    pI = 0.8
 
     Jmat = np.zeros((N, N))
     Jmat[:, :Ne] = np.random.binomial(n=1, p=pE, size=(N,Ne)) * J / pE / Ne
@@ -170,12 +162,6 @@ def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2)
     E = 0.5
 
     dt = .01 # want long timescale variance
-    tstim = 10
-    Estim = 10
-    tstop = 500 + 2*tstim
-
-    pE = 0.5
-    pI = 0.8
 
     J = 6
     gmin, gmax = gbounds
@@ -250,11 +236,6 @@ def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2)
 
     r_th = np.array(r_th)
     var_spk_tree = (np.sqrt(J*(1-grange_th)*r_th + E)-1) / 4    
-
-    # print(gbif)
-    # print(cv_isi)
-    # if len(gbif) > 0:
-    #     cv_isi[grange_th > gbif] = np.nan
 
     ax[1, 0].plot(grange, var_sim, 'ko', alpha=0.5)
     ax[1, 0].plot(grange, var_sim_stim, 'ko', alpha=0.5)
@@ -347,16 +328,11 @@ def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2)
     var_spk_low = np.nan * Erange_th
     var_spk_low[Erange_th < 1] = 0
 
-    # var_spk_tree[Erange_th < Ebif[]] = 0
-
     ax[1, 1].plot(Erange, var_sim, 'ko', alpha=0.5)
     ax[1, 1].plot(Erange, var_sim_stim, 'ko', alpha=0.5)
     ax[1, 1].plot(Erange_th, var_spk_tree, 'k--', linewidth=2, label='tree')
     ax[1, 1].plot(Erange_th, var_spk, 'k', linewidth=2, label='exact')
     ax[1, 1].plot(Erange_th, var_spk_low, 'k', linewidth=2)
-
-
-    ### response of E and I cv_isi to inhibitory perturbation
 
     ax[0, 0].set_xlim((0, 3))
     ax[0, 1].set_xlim((0, 50))
@@ -379,7 +355,7 @@ def plot_ei_corrs(savefile='../results/fig_corrs.pdf', gbounds=(0, .75), Emax=2)
     fig.savefig(savefile)
 
 
-def plot_propagators_resum(savefile='../results/fig_propagators.pdf', Nvec=50):
+def plot_propagators_resum(savefile=os.path.join(results_dir, 'fig_propagators.pdf'), Nvec=50):
     
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(3.4, 5))
 
