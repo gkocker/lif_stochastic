@@ -469,6 +469,6 @@ def plot_propagators_resum(savefile=os.path.join(results_dir, 'fig_propagators.p
 
 if __name__ == '__main__':
 
-    plot_ei_corrs()
+    plot_ei_fluctuations()
     
     plot_propagators_resum()
