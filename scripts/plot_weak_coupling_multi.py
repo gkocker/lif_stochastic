@@ -789,10 +789,10 @@ def plot_fig_paradoxical_response(savefile='../results/fig5.pdf'):
 
 
 if __name__ == '__main__':
-    # plot_fig_single_pop_weakly_coupled()
-    # plot_fig_exc_inh_weakly_coupled()
+    plot_fig_exc_inh_weakly_coupled()
 
-    # plot_fig_exc_inh_bifurcation()
+    plot_fig_exc_inh_bifurcation()
 
     plot_fig_exc_inh_asymmetric_input(savefile='../results/fig4_raster.png')
-    # plot_fig_paradoxical_response(savefile='../results/fig5_cbar.pdf')
+
+    plot_fig_paradoxical_response(savefile='../results/fig5_cbar.pdf')
