@@ -178,7 +178,6 @@ def plot_fig_single_pop_bifurcation(savefile='../results/fig2_bif.pdf', Jbounds=
         Jrange_th = np.concatenate((Jrange_th1, Jrange_th2))
 
     r_th = [lif_rate_homog(g, E) for g in Jrange_th]
-    print(r_th)
 
     r_mft_low = 0 * Jrange_th
     v_mft_high = 0 * Jrange_th
@@ -280,8 +279,6 @@ def plot_fig_two_pt(savefile='../results/fig5.pdf'):
         else:
             vbar = E
             
-        print(vbar)
-
         phibar = phi(vbar)
         if vbar >= 1:
             phi_pr = 1

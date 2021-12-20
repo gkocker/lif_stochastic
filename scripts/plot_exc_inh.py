@@ -18,7 +18,7 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
 
-def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig../results/fig3.pdf'):
+def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig3.pdf'):
 
     # fig, ax = plt.subplots(2, 9, figsize=(3.4, 3.7))
     fig = plt.figure(figsize=(3.4, 3.7))
@@ -127,9 +127,6 @@ def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig../results/fig3.pdf'
     Jmat[:, :Ne] = np.random.binomial(n=1, p=pE, size=(N,Ne)) * J / pE / Ne
     Jmat[:, Ne:] = np.random.binomial(n=1, p=pI, size=(N,Ni)) * (-g * J) / pI / Ni
 
-    print(np.mean(Jmat[:, :Ne]))
-    print(np.mean(Jmat[:, Ne:]))
-
     tstop = 20
     dt = .01
     tplot = np.arange(0, tstop, dt)
@@ -185,7 +182,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile='../results/fig../results/fig3.pdf'
     fig.savefig(savefile)
 
 
-def plot_fig_exc_inh_bifurcation(savefile='../results/fig../results/fig3_bif.pdf', gbounds=(0, 1.8), Emax=2, eps=1e-11):    
+def plot_fig_exc_inh_bifurcation(savefile='../results/fig3_bif.pdf', gbounds=(0, 1.8), Emax=2, eps=1e-11):    
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
