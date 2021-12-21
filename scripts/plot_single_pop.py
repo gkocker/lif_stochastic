@@ -18,6 +18,10 @@ results_dir = os.path.join(root_dir, 'results')
 
 def plot_fig_single_pop_weakly_coupled(savefile='../results/fig_homog.png', Jmax=10, Emax=2):
 
+    '''
+    reproduce figure 2a-d
+    '''
+
     fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
 
     ### first, the phase diagram
@@ -141,6 +145,10 @@ def plot_fig_single_pop_weakly_coupled(savefile='../results/fig_homog.png', Jmax
 
 def plot_fig_single_pop_bifurcation(savefile='../results/fig_homog_bif.pdf', Jbounds=(.5, 5.5), Emax=2, eps=1e-11):    
 
+    '''
+    reproduce figure 2e, f
+    '''
+
     fig, ax = plt.subplots(2, 1, figsize=(2, 3.7))
 
     E = .5
@@ -249,133 +257,6 @@ def plot_fig_single_pop_bifurcation(savefile='../results/fig_homog_bif.pdf', Jbo
     fig.tight_layout()
     sns.despine(fig)
     fig.savefig(savefile)
-
-
-def plot_fig_two_pt(savefile='../results/fig5.pdf'):
-
-    fig, ax = plt.subplots(2, 3, figsize=(5.4, 3.7))
-
-    tstop = 1000
-    dt = 0.01
-    N = 100
-    connection_prob = 0.5
-
-    J = 1
-
-    E_vec = (1.2, 10)
-    # E_vec = np.arange(1, 3)
-
-    for i, E in enumerate(E_vec):
-
-        ### a: bare and dressed propagators
-
-        w, Dnn_full, Dvn_full, Dnv_full, Dvv_full = fixed_pt_iter_propagators_1pop(J=J, E=E)
-
-        ### define the mean-field theory
-        if J == 0:
-            vbar = np.sqrt(E)
-        elif ((J * (4-J)/4) < E) and (J > 2):
-            vbar = (J + np.sqrt(J**2 + 4*(E-J))) / 2
-        elif (J <= 2) and (E > 1):
-            vbar = (J + np.sqrt(J**2 + 4*(E-J))) / 2
-        else:
-            vbar = E
-            
-        phibar = phi(vbar)
-        if vbar >= 1:
-            phi_pr = 1
-        else:
-            phi_pr = 0
-
-        ### bare propagators
-
-        Dnn = (1 + phibar +1j * w) / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dvn = -phi_pr / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dnv = -vbar / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dvv = -1 / (1 + phibar + phi_pr * vbar + 1j*w)
-
-        ax[0, 0].plot(w, np.abs(Dnn), '--', color=colors[i], linewidth=2)
-        ax[0, 0].plot(w, np.abs(Dnn_full), color=colors[i], linewidth=2)
-
-        ax[0, 1].plot(w, np.abs(Dnv), '--', color=colors[i], linewidth=2)
-        ax[0, 1].plot(w, np.abs(Dnv_full), color=colors[i], linewidth=2)
-
-        ax[1, 0].plot(w, np.abs(Dvn), '--', color=colors[i], linewidth=2)
-        ax[1, 0].plot(w, np.abs(Dvn_full), color=colors[i], linewidth=2)
-
-        ax[1, 1].plot(w, np.abs(Dvv), '--', color=colors[i], linewidth=2)
-        ax[1, 1].plot(w, np.abs(Dvv_full), color=colors[i], linewidth=2)
-
-        ### two-point function sim
-
-        Jmat = np.random.binomial(n=1, p=connection_prob, size=(N,N)) * J / connection_prob / N
-        _, spktimes = sim_lif_pop(J=Jmat, E=E, tstop=tstop, tstim=0, Estim=0)
-
-        spk = create_spike_train(spktimes, neuron=0, tstop=tstop, dt=dt)
-        f, C = welch(spk, fs=1/dt, scaling='density', window='hann', nperseg=2048)
-        f *= 2*np.pi # angular frequency
-
-        for j in range(1, N):
-            spk = create_spike_train(spktimes, neuron=j, tstop=tstop, dt=dt)
-            _, Ctmp = welch(spk, fs=1/dt, scaling='density', window='hann', nperseg=2048)
-            C += Ctmp
-        
-        C /= N * 2 # factor of 2 from one-sided welch
-
-        ax[0, 2].plot(f, C, '.', color=colors[i], linewidth=2, alpha=0.2)
-
-        ### two-point function theory
-
-        two_pt_a = phibar * Dnn * Dnn.conj() # diagram with the mft source
-        two_pt_a_full = phibar * Dnn_full * Dnn_full.conj() # diagram with the mft source
-        ax[0, 2].plot(w, np.abs(two_pt_a_full), '--', color=colors[i], linewidth=2)
-
-        ### diagram with the correction source
-        r_th = lif_rate_homog(J, E)
-
-        _, Dnn_full, Dvn_full, Dnv_full, Dvv_full = fixed_pt_iter_propagators_1pop_true(J=J, E=E, w=w, max_its=100)
-        two_pt_a_full = r_th * Dnn_full * Dnn_full.conj() # diagram with the mft source
-
-        ax[0, 2].plot(w, np.abs(two_pt_a_full), '-', color=colors[i], linewidth=2)
-
-
-        
-        # dn = r_th - phibar
-        
-        # Dnv0 = -vbar / (1 + phibar + phi_pr * vbar)
-        # two_pt_b = -J * phi_pr * dn * Dnn * Dnn.conj() * Dnv0
-
-        # Dnv0_full = Dnv_full[np.argmin(np.abs(w))]
-        # two_pt_b_full = -J * phi_pr * dn * Dnn_full * Dnn_full.conj() * Dnv0_full
-
-        # ax[0, 2].plot(w, np.abs(two_pt_a), '--', color=colors[i], linewidth=2)
-        # ax[0, 2].plot(w, np.abs(two_pt_a_full), '-', color=colors[i], linewidth=2)
-        # ax[0, 2].plot(w, np.abs(two_pt_a_full + two_pt_b_full), '-', color=colors[i], linewidth=2)
-
-
-
-
-    ax[0, 0].set_title(r'$\Delta_{\delta n, \tilde{n}}$', fontsize=fontsize)
-    ax[0, 1].set_title(r'$\Delta_{\delta n, \tilde{v}}$', fontsize=fontsize)
-    ax[1, 0].set_title(r'$\Delta_{\delta v, \tilde{n}}$', fontsize=fontsize)
-    ax[1, 1].set_title(r'$\Delta_{\delta v, \tilde{v}}$', fontsize=fontsize)
-
-    ax[1, 0].set_xlabel('Frequency (rad.)', fontsize=fontsize)
-    ax[1, 1].set_xlabel('Frequency (rad.)', fontsize=fontsize)
-
-    ax[1, 0].set_ylabel('Linear response magnitude', fontsize=fontsize)
-
-    for axi in (ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1], ax[0, 2]):
-        axi.set_xscale('log')
-        # axi.set_ylim((0, 1))
-        axi.set_xlim((.1, 100))
-        axi.set_xticks((.1, 1, 10, 100))
-
-    fig.tight_layout()
-    sns.despine(fig)
-    fig.savefig(savefile)
-
-    return None
 
 
 if __name__ == '__main__':
