@@ -473,7 +473,7 @@ def plot_propagators_resum(savefile=os.path.join(results_dir, 'fig_propagators.p
     fig.savefig(savefile)
 
 
-def plot_fig_propagators(savefile='../results/fig_propagators1.pdf'):
+def plot_fig_propagators_old(savefile='../results/fig_propagators1.pdf'):
 
     '''
     This is an old version of "plot_propagators_resum."
