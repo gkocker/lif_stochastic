@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from scipy.signal import welch
 import seaborn as sns
@@ -13,10 +14,10 @@ labelsize = 9
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
-root_dir = '/Users/gabeo/Documents/projects/path_lif'
+root_dir = '/Users/gabeo/Documents/projects/lif_stochastic'
 results_dir = os.path.join(root_dir, 'results')
 
-def plot_fig_single_pop_weakly_coupled(savefile='../results/fig_homog.png', Jmax=10, Emax=2):
+def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_homog.png'), Jmax=10, Emax=2):
 
     '''
     reproduce figure 2a-d
@@ -143,7 +144,7 @@ def plot_fig_single_pop_weakly_coupled(savefile='../results/fig_homog.png', Jmax
     fig.savefig(savefile, dpi=600)
 
 
-def plot_fig_single_pop_bifurcation(savefile='../results/fig_homog_bif.pdf', Jbounds=(.5, 5.5), Emax=2, eps=1e-11):    
+def plot_fig_single_pop_bifurcation(savefile=os.path.join(results_dir, 'fig_homog_bif.pdf'), Jbounds=(.5, 5.5), Emax=2, eps=1e-11):    
 
     '''
     reproduce figure 2e, f
@@ -260,9 +261,6 @@ def plot_fig_single_pop_bifurcation(savefile='../results/fig_homog_bif.pdf', Jbo
 
 
 if __name__ == '__main__':
-    # plot_fig_single_pop_weakly_coupled()
-    # plot_fig_exc_inh_weakly_coupled()
-
+    
+    plot_fig_single_pop_weakly_coupled()
     plot_fig_single_pop_bifurcation()
-
-    # plot_fig_two_pt()

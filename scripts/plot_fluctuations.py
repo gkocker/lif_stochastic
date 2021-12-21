@@ -13,7 +13,7 @@ labelsize = 8
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
-root_dir = '/Users/gabeo/Documents/projects/path_lif'
+root_dir = '/Users/gabeo/Documents/projects/lif_stochastic'
 results_dir = os.path.join(root_dir, 'results')
 
 def calc_avg_spectrum(spktimes, N=None, tstop=None, dt=.01):
