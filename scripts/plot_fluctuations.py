@@ -13,7 +13,7 @@ labelsize = 8
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
 
-root_dir = '/Users/gabeo/Documents/projects/lif_stochastic'
+root_dir = '/Users/gkocker/Documents/projects/lif_stochastic'
 results_dir = os.path.join(root_dir, 'results')
 
 def calc_avg_spectrum(spktimes, N=None, tstop=None, dt=.01):
@@ -23,7 +23,7 @@ def calc_avg_spectrum(spktimes, N=None, tstop=None, dt=.01):
     
     if tstop is None:
         tstop = np.amax(spktimes[:, 0])
-
+    
     spk = create_spike_train(spktimes, neuron=0, dt=dt, tstop=tstop)
     spk -= np.mean(spk)
     wsim, Csim = welch(spk, fs=1/dt, scaling='density', window='bartlett', nperseg=2048, return_onesided=False, detrend=False)
@@ -83,7 +83,7 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
     Plot figure 7.
     '''
 
-    fig, ax = plt.subplots(2, 2, figsize=(3.4, 3.7))
+    fig, ax = plt.subplots(3, 2, figsize=(3.4, 5))
 
     ### isi density and power spectrum for example parameters
     g = 0.3
@@ -151,15 +151,30 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
 
     ax[0, 1].plot(w, Cw, 'k', linewidth=2, label='exact')
 
-    ### theory - approximate power spectrum
-    vbar = np.sqrt(J*(1-g)*r_th + E)
-    Cw_tree = (vbar - 1) * (vbar**2 + w**2) / (4*vbar**2 + w**2)
-    ax[0, 1].plot(w, Cw_tree, 'k--', linewidth=2, label='tree')
+    ### theory - approximate power spectrum, tree 
+    vbar = (J*(1-g) + np.sqrt((J*(1-g))**2 + 4*(E-J*(1-g)))) / 2
+    f = vbar - 1
+    if vbar < 1:
+        f = 0
+    Cw_tree = f * (vbar**2 + w**2) / (4*vbar**2 + w**2)
+    # vbar = np.sqrt(J*(1-g)*r_th + E)
+    # Cw_tree = (vbar - 1) * (vbar**2 + w**2) / (4*vbar**2 + w**2)
+    ax[0, 1].plot(w, Cw_tree, 'k:', linewidth=2, label='mean field')
+
+    ### theory - one-loop effective action
+    vbar = (J*(1-g))/2 + 2/3*np.sqrt((3/4*J*(1-g))**2 - 9/4*J*(1-g) + 3*E - 3/4)
+    f = 3/4*(vbar - 1)
+    if vbar < 1:
+        f = 0
+    Cw_tree = f * (vbar**2 + w**2) / (4*vbar**2 + w**2)
+    # vbar = np.sqrt(J*(1-g)*r_th + E)
+    # Cw_tree = (vbar - 1) * (vbar**2 + w**2) / (4*vbar**2 + w**2)
+    ax[0, 1].plot(w, Cw_tree, 'k--', linewidth=2, label='1 loop')
 
     ### theory - resummed propagators
-    w, Dnn_full, Dvn_full, Dnv_full, Dvv_full = fixed_pt_iter_propagators_1pop_true(J*(1-g), E)
-    Cw_tree = (vbar - 1) * Dnn_full * Dnn_full.conj()
-    ax[0, 1].plot(w, Cw_tree, 'k:', linewidth=2, label='tree, re-summed')
+    # w, Dnn_full, Dvn_full, Dnv_full, Dvv_full = fixed_pt_iter_propagators_1pop_true(J*(1-g), E)
+    # Cw_tree = (vbar - 1) * Dnn_full * Dnn_full.conj()
+    # ax[0, 1].plot(w, Cw_tree, 'k:', linewidth=2, label='tree, re-summed')
 
     ### spike train variance as function of g
 
@@ -187,7 +202,7 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
         _, spktimes = sim_lif_pop(J=Jmat, E=E, tstop=tstop, dt=dt, tstim=0, Estim=0)
 
         if len(spktimes) > 0:
-            r_sim.append(len(spktimes) / N / tstop)
+            r_sim.append(len(spktimes) / N / np.amax(spktimes[:, 0]))
             _, Csim = calc_avg_spectrum(spktimes, tstop=tstop, dt=dt, N=N)
             var_sim.append(Csim[1])
         else:
@@ -206,7 +221,7 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
             r_sim_stim.append(np.nan)
             var_sim_stim.append(np.nan)
 
-    grange_th = np.linspace(gmin, gmax, 50)
+    grange_th = np.linspace(gmin, gmax, 200)
 
     r_th = []
     var_spk = []
@@ -239,13 +254,40 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
             var_spk.append(0)
 
     r_th = np.array(r_th)
-    var_spk_tree = (np.sqrt(J*(1-grange_th)*r_th + E)-1) / 4    
+    var_spk = np.array(var_spk)
 
-    ax[1, 0].plot(grange, var_sim, 'ko', alpha=0.5)
-    ax[1, 0].plot(grange, var_sim_stim, 'ko', alpha=0.5)
-    ax[1, 0].plot(grange_th, var_spk_tree, 'k--', linewidth=2, label='tree')
-    ax[1, 0].plot(grange_th, var_spk, 'k', linewidth=2, label='exact')
-    ax[1, 0].plot(grange_th, 0*grange_th, 'k', linewidth=2)
+    vbar = (J*(1-grange_th) + np.sqrt((J*(1-grange_th))**2 + 4*(E-J*(1-grange_th)))) / 2
+    f_mft = vbar - 1
+    f_mft[vbar < 1] = 0
+    f_mft[np.isnan(vbar)] = 0
+    var_spk_tree = f_mft / 4
+
+    f_low = 0*grange_th
+    var_spk_low = 0*grange_th
+    # f_low[vbar > 1] = np.nan
+
+    vbar = (J*(1-grange_th))/2 + 2/3*np.sqrt((3/4*J*(1-grange_th))**2 - 9/4*J*(1-grange_th) + 3*E - 3/4)
+    f_1loop = 3/4*(vbar - 1)
+    f_1loop[vbar < 1] = 0
+    f_1loop[np.isnan(vbar)] = 0
+    var_spk_1loop = f_1loop / 4
+    # Cw_tree = f * (vbar**2 + w**2) / (4*vbar**2 + w**2)
+
+    # var_spk_tree = (np.sqrt(J*(1-grange_th)*r_th + E)-1) / 4    
+
+    ax[1, 0].plot(grange, r_sim, 'ko', alpha=0.5)
+    ax[1, 0].plot(grange, r_sim_stim, 'ko', alpha=0.5)
+    ax[1, 0].plot(grange_th, f_mft, 'k:', label='mean field')
+    ax[1, 0].plot(grange_th, f_1loop, 'k--', label='1 loop')
+    ax[1, 0].plot(grange_th, r_th, 'k', label='exact')
+    ax[1, 0].plot(grange_th, f_low, 'k')
+
+    ax[2, 0].plot(grange, var_sim, 'ko', alpha=0.5)
+    ax[2, 0].plot(grange, var_sim_stim, 'ko', alpha=0.5)
+    ax[2, 0].plot(grange_th, var_spk_tree, 'k:', linewidth=2, label='mean field')
+    ax[2, 0].plot(grange_th, var_spk_1loop, 'k--', linewidth=2, label='1 loop')
+    ax[2, 0].plot(grange_th, var_spk, 'k', linewidth=2, label='exact')
+    ax[2, 0].plot(grange_th, var_spk_low, 'k', linewidth=2)
 
     ### spike train variance as function of E
     g = 0.25
@@ -265,12 +307,13 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
         print('sims, E, {}/{}'.format(ei+1,len(Erange)))
 
         _, spktimes = sim_lif_pop(J=Jmat, E=E, tstop=tstop, dt=dt, tstim=0, Estim=0)
-        r_sim.append(len(spktimes) / N / tstop)
 
         if len(spktimes) > 0:
-            _, Csim = calc_avg_spectrum(spktimes, tstop=tstop, dt=dt, N=N)
+            r_sim.append(len(spktimes) / N / np.amax(spktimes[:, 0]))
+            _, Csim = calc_avg_spectrum(spktimes, tstop=np.amax(spktimes[:, 0])+dt, dt=dt, N=N)
             var_sim.append(Csim[1])
         else:
+            r_sim.append(0)
             var_sim.append(0)
         
         if E < 1:
@@ -289,8 +332,12 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
             r_sim_stim.append(np.nan) # already have activity, don't need stim to kick out of low state
             var_sim_stim.append(np.nan)
 
+        fig2, ax2 = plt.subplots(1, 1, figsize=(4, 4))
+        ax2.plot(spktimes[:, 0], spktimes[:, 1], 'k|', markersize=0.5)
+        fig2.savefig(os.path.join(results_dir, 'raster_J={}_g={}_E={}.pdf'.format(J, np.round(g, decimals=1), np.round(E, decimals=1))))
 
-    Erange_th = np.arange(-1, Emax, .01)
+
+    Erange_th = np.arange(-1, Emax, .005)
 
     r_th = []
     var_spk = []
@@ -298,6 +345,8 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
     for ei, E in enumerate(Erange_th):
 
         r_th_i = lif_rate_homog(J*(1-g), E)
+        if np.isnan(r_th_i):
+            r_th_i = 0
         r_th.append(r_th_i)
 
         if r_th_i > 0:
@@ -320,39 +369,68 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
             var_spk.append(Cw[1]) # 0 is the delta peak
 
         else:
-            var_spk.append(np.nan)
+            var_spk.append(0)
 
     r_th = np.array(r_th)
     var_spk = np.array(var_spk)
 
     dE = Erange_th[1] - Erange_th[0]
+
+    vbar = (J*(1-g) + np.sqrt((J*(1-g))**2 + 4*(Erange_th-J*(1-g)))) / 2
+    f_mft = vbar - 1
+    f_mft[vbar < 1] = 0
+    f_mft[np.isnan(vbar)] = 0
+    var_spk_tree = f_mft / 4
+    f_low = np.nan * Erange_th
+    f_low[Erange_th < 1] = 0
+    # var_spk_tree = (np.sqrt(J*(1-g)*r_th + Erange_th)-1) / 4   
+
+    vbar = (J*(1-g))/2 + 2/3*np.sqrt((3/4*J*(1-g))**2 - 9/4*J*(1-g) + 3*Erange_th - 3/4)
+    f_1loop = 3/4*(vbar - 1)
+    f_1loop[vbar < 1] = 0
+    f_1loop[np.isnan(vbar)] = 0
+    var_spk_1loop = f_1loop / 4
+
     var_spk[Erange_th <= dE] = 0
-    var_spk_tree = (np.sqrt(J*(1-g)*r_th + Erange_th)-1) / 4   
-    var_spk_tree[Erange_th < dE] = 0 
+    # var_spk_tree[Erange_th < dE] = 0 
     var_spk_low = np.nan * Erange_th
     var_spk_low[Erange_th < 1] = 0
 
-    ax[1, 1].plot(Erange, var_sim, 'ko', alpha=0.5)
-    ax[1, 1].plot(Erange, var_sim_stim, 'ko', alpha=0.5)
-    ax[1, 1].plot(Erange_th, var_spk_tree, 'k--', linewidth=2, label='tree')
-    ax[1, 1].plot(Erange_th, var_spk, 'k', linewidth=2, label='exact')
-    ax[1, 1].plot(Erange_th, var_spk_low, 'k', linewidth=2)
+    ax[1, 1].plot(Erange, r_sim, 'ko', alpha=0.5)
+    ax[1, 1].plot(Erange, r_sim_stim, 'ko', alpha=0.5)
+    ax[1, 1].plot(Erange_th, f_mft, 'k:')
+    ax[1, 1].plot(Erange_th, f_1loop, 'k--')
+    ax[1, 1].plot(Erange_th, f_low, 'k')
+    ax[1, 1].plot(Erange_th, r_th, 'k')
+
+    ax[2, 1].plot(Erange, var_sim, 'ko', alpha=0.5)
+    ax[2, 1].plot(Erange, var_sim_stim, 'ko', alpha=0.5)
+    ax[2, 1].plot(Erange_th, var_spk_tree, 'k:', linewidth=2, label='mean field')
+    ax[2, 1].plot(Erange_th, var_spk_1loop, 'k--', linewidth=2, label='1 loop')
+    ax[2, 1].plot(Erange_th, var_spk, 'k', linewidth=2, label='exact')
+    ax[2, 1].plot(Erange_th, var_spk_low, 'k', linewidth=2)
 
     ax[0, 0].set_xlim((0, 3))
-    ax[0, 1].set_xlim((0, 50))
-    ax[0, 1].set_ylim((0, 1.7))
+    ax[0, 1].set_xlim((0, 40))
+    # ax[0, 1].set_xscale('log')
+    ax[0, 1].set_ylim((0, 2.5))
 
     ax[1, 0].set_xlim((gmin, gmax))
+    ax[2, 0].set_xlim((gmin, gmax))
+
+    ax[1, 1].set_xlim((-1, Emax))
+    ax[2, 1].set_xlim((-1, Emax))
 
     ax[0, 0].set_xlabel('Interspike interval {}'.format(r'$s$'), fontsize=fontsize)
     ax[0, 0].set_ylabel('Density {}'.format(r'$p(s)$'), fontsize=fontsize)
 
     ax[0, 1].set_xlabel('Frequency, {} Hz'.format(r'$\tau$'), fontsize=fontsize)
     ax[0, 1].set_ylabel('Spectral density, {} Hz'.format(r'$\tau$'), fontsize=fontsize)
+    ax[1, 0].set_ylabel('Rate (norm.)', fontsize=fontsize)
 
-    ax[1, 0].set_xlabel('g', fontsize=fontsize)
-    ax[1, 0].set_ylabel('Pop. variance', fontsize=fontsize)
-    ax[1, 1].set_xlabel('E', fontsize=fontsize)
+    ax[2, 0].set_xlabel('g', fontsize=fontsize)
+    ax[2, 0].set_ylabel('Pop. variance', fontsize=fontsize)
+    ax[2, 1].set_xlabel('E', fontsize=fontsize)
 
     sns.despine(fig)
     fig.tight_layout()
@@ -383,17 +461,17 @@ def plot_propagators_resum(savefile=os.path.join(results_dir, 'fig_propagators.p
 
     vbar = np.sqrt(J*r_th + E)
     if vbar > 1:
-        phibar = vbar - 1
-        phi_pr = 1
+        hazardbar = vbar - 1
+        hazard_pr = 1
     else:
-        phibar = 0
-        phi_pr = 0
+        hazardbar = 0
+        hazard_pr = 0
 
     ### define the bare propagators
-    Dnn = (1 + phibar +1j * w) / (1 + phibar + phi_pr * vbar + 1j*w)
-    Dvn = -phi_pr / (1 + phibar + phi_pr * vbar + 1j*w)
-    Dnv = -vbar / (1 + phibar + phi_pr * vbar + 1j*w)
-    Dvv = -1 / (1 + phibar + phi_pr * vbar + 1j*w)
+    Dnn = (1 + hazardbar +1j * w) / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+    Dvn = -hazard_pr / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+    Dnv = -vbar / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+    Dvv = -1 / (1 + hazardbar + hazard_pr * vbar + 1j*w)
 
     scale = 1000
     ax[0, 1].plot(w, scale*(np.abs(Dnn_full) - np.abs(Dnn)), linewidth=2, color=colors[0])
@@ -427,17 +505,17 @@ def plot_propagators_resum(savefile=os.path.join(results_dir, 'fig_propagators.p
 
             vbar = np.sqrt(J*r_th + E)
             if vbar > 1:
-                phibar = vbar - 1
-                phi_pr = 1
+                hazardbar = vbar - 1
+                hazard_pr = 1
             else:
-                phibar = 0
-                phi_pr = 0
+                hazardbar = 0
+                hazard_pr = 0
 
             ### define the bare propagators
-            Dnn = (1 + phibar +1j * w) / (1 + phibar + phi_pr * vbar + 1j*w)
-            Dvn = -phi_pr / (1 + phibar + phi_pr * vbar + 1j*w)
-            Dnv = -vbar / (1 + phibar + phi_pr * vbar + 1j*w)
-            Dvv = -1 / (1 + phibar + phi_pr * vbar + 1j*w)
+            Dnn = (1 + hazardbar +1j * w) / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+            Dvn = -hazard_pr / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+            Dnv = -vbar / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+            Dvv = -1 / (1 + hazardbar + hazard_pr * vbar + 1j*w)
 
             w0ind = np.argmin(np.abs(w))
             Dnn_diff[i, j] = -np.abs(Dnn[w0ind]) + np.abs(Dnn_full[w0ind])
@@ -509,18 +587,18 @@ def plot_fig_propagators_old(savefile='../results/fig_propagators1.pdf'):
         else:
             vbar = E
             
-        phibar = phi(vbar)
+        hazardbar = hazard(vbar)
         if vbar >= 1:
-            phi_pr = 1
+            hazard_pr = 1
         else:
-            phi_pr = 0
+            hazard_pr = 0
 
         ### bare propagators
 
-        Dnn = (1 + phibar +1j * w) / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dvn = -phi_pr / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dnv = -vbar / (1 + phibar + phi_pr * vbar + 1j*w)
-        Dvv = -1 / (1 + phibar + phi_pr * vbar + 1j*w)
+        Dnn = (1 + hazardbar +1j * w) / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+        Dvn = -hazard_pr / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+        Dnv = -vbar / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+        Dvv = -1 / (1 + hazardbar + hazard_pr * vbar + 1j*w)
 
         ax[0, 0].plot(w, np.abs(Dnn), '--', color=colors[i], linewidth=2)
         ax[0, 0].plot(w, np.abs(Dnn_full), color=colors[i], linewidth=2)
@@ -554,8 +632,8 @@ def plot_fig_propagators_old(savefile='../results/fig_propagators1.pdf'):
 
         ### two-point function theory
 
-        two_pt_a = phibar * Dnn * Dnn.conj() # diagram with the mft source
-        two_pt_a_full = phibar * Dnn_full * Dnn_full.conj() # diagram with the mft source
+        two_pt_a = hazardbar * Dnn * Dnn.conj() # diagram with the mft source
+        two_pt_a_full = hazardbar * Dnn_full * Dnn_full.conj() # diagram with the mft source
         ax[0, 2].plot(w, np.abs(two_pt_a_full), '--', color=colors[i], linewidth=2)
 
         ### diagram with the correction source
@@ -568,13 +646,13 @@ def plot_fig_propagators_old(savefile='../results/fig_propagators1.pdf'):
 
 
         
-        # dn = r_th - phibar
+        # dn = r_th - hazardbar
         
-        # Dnv0 = -vbar / (1 + phibar + phi_pr * vbar)
-        # two_pt_b = -J * phi_pr * dn * Dnn * Dnn.conj() * Dnv0
+        # Dnv0 = -vbar / (1 + hazardbar + hazard_pr * vbar)
+        # two_pt_b = -J * hazard_pr * dn * Dnn * Dnn.conj() * Dnv0
 
         # Dnv0_full = Dnv_full[np.argmin(np.abs(w))]
-        # two_pt_b_full = -J * phi_pr * dn * Dnn_full * Dnn_full.conj() * Dnv0_full
+        # two_pt_b_full = -J * hazard_pr * dn * Dnn_full * Dnn_full.conj() * Dnv0_full
 
         # ax[0, 2].plot(w, np.abs(two_pt_a), '--', color=colors[i], linewidth=2)
         # ax[0, 2].plot(w, np.abs(two_pt_a_full), '-', color=colors[i], linewidth=2)
@@ -607,4 +685,4 @@ if __name__ == '__main__':
 
     plot_ei_fluctuations()
     
-    plot_propagators_resum()
+    # plot_propagators_resum()

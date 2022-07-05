@@ -1,5 +1,5 @@
 import numpy as np
-from src.model import phi
+from src.model import hazard
 
 def sim_pif(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1):
 
@@ -23,7 +23,7 @@ def sim_pif(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1):
 
         v[t] = v[t-1] + dt*E + np.dot(J, n) - n*v[t-1]
 
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
+        lam = hazard(v[t], B=B, v_th=v_th, p=p)
         if lam > 1/dt:
             lam = 1/dt
             
@@ -66,7 +66,7 @@ def sim_lif_pop(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim
 
         v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n) - n*(v[t-1]-v_r)
 
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
+        lam = hazard(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt
             
         n = np.random.binomial(n=1, p=dt*lam)
@@ -103,7 +103,7 @@ def sim_lif_pop_fully_connected(J, E, N=1000, tstop=100, dt=.01, B=1, v_th=1, p=
 
         v[t] = v[t-1] + dt*(-v[t-1] + Et) + J*np.sum(n) - n*(v[t-1]-v_r)
 
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
+        lam = hazard(v[t], B=B, v_th=v_th, p=p)
         # lam[lam > 1/dt] = 1/dt
 
         # n = np.random.binomial(n=1, p=dt*lam)
@@ -173,9 +173,9 @@ def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, pertu
         elif (t >= t_start_perturb2) and (t < t_end_perturb2):
             E[perturb_ind] -= perturb_amp
 
-        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + np.dot(J, n)
+        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
 
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
+        lam = hazard(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt
             
         n = np.random.binomial(n=1, p=dt*lam)
@@ -234,9 +234,9 @@ def sim_lif_perturbation_x(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, per
         if t > perturb_len:
             E[perturb_ind] += perturb_amp[(t - perturb_len) // perturb_len]
 
-        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + np.dot(J, n)
+        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
 
-        lam = phi(v[t], B=B, v_th=v_th, p=p)
+        lam = hazard(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt
             
         n = np.random.binomial(n=1, p=dt*lam)

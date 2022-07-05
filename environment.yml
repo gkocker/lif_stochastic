@@ -1,6 +1,6 @@
 name: subthresh
 channels:
-  - defaults
+  - conda-forge
 dependencies:
   - appnope=0.1.0=py36hf537a9a_0
   - argon2-cffi=20.1.0=py36haf1e3a3_1
