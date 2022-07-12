@@ -360,7 +360,6 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
     fig.savefig(savefile)
 
 
-
 def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifurcation.pdf'), gbounds=(0, 1.), Emax=2, eps=1e-11):    
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
@@ -628,7 +627,7 @@ def plot_fig_paradoxical_response_example(Ne=500, Ni=200, pE=0.5, pI=0.8, J=6, g
     return None
 
 
-def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=.01, trans=10, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
+def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt=.01, trans=10, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
@@ -638,7 +637,7 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=
     N = Ne + Ni
 
     perturb_ind = range(Ne, N)
-    perturb_amp = (0.1, )
+    perturb_amp = (0.01, )
     Nperturb = len(perturb_amp)
     perturb_len = tstop // (Nperturb + 1)
 
@@ -675,7 +674,6 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=
 
                 # run sim, compute I rate
                 _, spktimes = sim_lif_perturbation_x(J=Jmat, E=E, perturb_amp=perturb_amp, perturb_ind=perturb_ind, tstop=tstop, dt=dt)
-
 
                 if len(spktimes) > 0:
                     spktimes_I = spktimes[spktimes[:, 1] >= Ne][:, 0] # only times
@@ -775,19 +773,8 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=
 
     else:
         print('running sims')
-        p = 1
-        pE = 0.5
-        pI = 0.8
+        # p = 1
 
-        Ne = 500
-        Ni = 200
-        N = Ne + Ni
-
-        tstop = 200
-        dt = .01
-        trans = 10
-
-        Npts = 12
         Emin, Emax = 1, 6
         Jmin, Jmax = 0, 6
         E_vec = np.linspace(Emin, Emax, Npts)
@@ -806,7 +793,6 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=200, dt=
             
                 # run sim, compute I rate
                 _, spktimes = sim_lif_perturbation_x(J=Jmat, E=E, perturb_amp=perturb_amp, perturb_ind=perturb_ind, tstop=tstop, dt=dt)
-
 
                 if len(spktimes) > 0:
                     spktimes_I = spktimes[spktimes[:, 1] >= Ne][:, 0] # only times
