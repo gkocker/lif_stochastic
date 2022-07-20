@@ -22,194 +22,9 @@ root_dir = '/Users/gkocker/Documents/projects/lif_stochastic'
 results_dir = os.path.join(root_dir, 'results')
 
 
-def plot_fig_exc_inh_weakly_coupled_old(savefile=os.path.join(results_dir, 'fig_ei.pdf')):
-
-    # fig, ax = plt.subplots(2, 9, figsize=(3.4, 3.7))
-    fig = plt.figure(figsize=(3.4, 3.7))
-    nrows = 11
-    gs = GridSpec(2, nrows, figure=fig)
-
-    ax1 = fig.add_subplot(gs[0, :nrows//2])
-
-    ### E-J phase diagram
-
-    # Npts = 1000
-    # E = np.linspace(-1, 1, Npts)
-    # Jbound = 2 + 2*np.sqrt(1-E)
-
-    # J = np.linspace(0, 8, Npts)
-    # JJ, EE = np.meshgrid(J, E)
-
-    # gbound = (JJ-2)/JJ-2*np.sqrt(1-EE)/JJ
-
-    # for i in range(gbound.shape[1]):
-    #     ind = np.where(J < 2 + 2*np.sqrt(1-E[i]) - .01)
-    #     gbound[i,ind] = np.nan
-
-    # ax1.plot(Jbound, E, 'k:')
-    # im = ax1.imshow(gbound, origin='lower', extent=(0,max(J),-1,1), aspect=max(J)/2.5, alpha=0.5, clim=(0, .6), cmap='Greys')
-
-    # ax1.plot(J, np.ones(Npts), 'k')
-
-    # ax1.text(s='H', x=5, y=1.1, fontsize=fontsize, horizontalalignment='center')
-    # ax1.text(s='L', x=1.5, y=0.4, fontsize=fontsize, verticalalignment='center')
-    # ax1.text(s='L\nor\nB', x=5., y=.5, fontsize=fontsize, verticalalignment='center')
-
-    # divider = make_axes_locatable(ax1)
-    # cax = divider.append_axes('right', size='5%', pad=0.01)
-    # fig.colorbar(im, cax=cax, orientation='vertical', label='Max g for B', drawedges=False, ticks=[0, 0.3, 0.6])
-
-    ### J-g phase diagram
-
-    E = .9
-    Npts = 1000
-    g = np.linspace(0, 4, Npts)
-
-    J = (2 - 4*np.sqrt((1-E)/3)/(1-g))
-    J[J < 0] = np.nan
-
-    ax1.plot(g, J, color=colors[0])
-
-    J = (2 + 4*np.sqrt((1-E)/3)/(1-g))
-    J[J < 0] = np.nan
-    ax1.plot(g, J, color=colors[0])
-
-    ax1.set_xlabel('g', fontsize=fontsize)
-    ax1.set_ylabel('J', fontsize=fontsize)
-    ax1.set_xlim((0, max(g)))
-    ax1.set_ylim((0, 2))
-
-    # ### J-g phase diagram
-    # # ax2 = fig.add_subplot(222)
-    # ax2 = fig.add_subplot(gs[0, nrows//2+1:])
-    # Npts = 1000
-    # J = np.linspace(0, 10, Npts)
-
-    # Evec = [-.5, 0, .5, .99]
-
-    # for E in Evec:
-
-    #     Jmin = 2 + 2*np.sqrt(1-E)
-    #     gbound = (J-2)/J - 2*np.sqrt(1-E)/J
-
-    #     # plt.plot([Jmin, Jmin], [0, 6], 'k')
-    #     ax2.plot(J, gbound, label=r'$E={}$'.format(E))
-
-    # ax2.legend(loc=0, frameon=False, fontsize=fontsize)
-    # ax2.set_xlabel('J', fontsize=fontsize)
-    # ax2.set_ylabel('g', fontsize=fontsize)
-    # ax2.set_ylim((0, 1.5))
-
-    ### E-g phase diagram
-    ax2 = fig.add_subplot(gs[0, nrows//2+1:])
-    Npts = 1000
-    g = np.linspace(0, 2, Npts)
-
-    ax2.plot(g, np.ones(Npts,), 'k')
-
-    Jvec = [6]
-    E = np.arange(-1, 1, .01)
-
-    for i, J in enumerate(Jvec):
-        gbound = (J-2)/J - 2*np.sqrt((1-E) / J**2)
-        ax2.plot(gbound, E, ':', color=colors[i], label='mean field')
-
-        gbound = (J-2)/J + 2*np.sqrt((1-E) / J**2)
-        ax2.plot(gbound, E, ':', color=colors[i])
-
-
-        gbound = 1 - 2/J - 4/np.sqrt(3)*np.sqrt((1-E)/(J**2))
-        ax2.plot(gbound, E, color=colors[i], label='1 loop')
-
-        gbound = 1 - 2/J + 4/np.sqrt(3)*np.sqrt((1-E)/(J**2))
-        ax2.plot(gbound, E, color=colors[i])
-
-    # ax2.legend(loc=0, frameon=False, fontsize=fontsize)
-    ax2.set_xlabel('g', fontsize=fontsize)
-    ax2.set_ylabel('E', fontsize=fontsize)
-    ax2.legend(loc=0, frameon=False, fontsize=fontsize)
-
-    ax2.text(x=.2, y=0, s='B', va='center', ha='center', fontsize=fontsize)
-    ax2.text(x=.5, y=0, s='L', va='center', ha='center', fontsize=fontsize)
-    ax2.text(x=.5, y=1.5, s='H', va='center', ha='center', fontsize=fontsize)
-
-    ax2.set_xlim((0, 1.5))
-    ax2.set_ylim((-1, 2))
-
-    ### sims for two regions
-
-    ax3 = fig.add_subplot(gs[1, :nrows//2])
-
-    J = 6
-    g = 0.3
-    E = 0.5
-
-    Ne = 200
-    Ni = 50
-    N = Ne + Ni
-    pE = 0.2
-    pI = 0.8
-
-    Jmat = np.zeros((N, N))
-    Jmat[:, :Ne] = np.random.binomial(n=1, p=pE, size=(N,Ne)) * J / pE / Ne
-    Jmat[:, Ne:] = np.random.binomial(n=1, p=pI, size=(N,Ni)) * (-g * J) / pI / Ni
-
-    tstop = 20
-    dt = .01
-    tplot = np.arange(0, tstop, dt)
-    E = -.5
-    perturb_amp = 2
-    perturb_len = 2
-
-    Nt = int(tstop/dt)
-    E_plot = np.zeros(Nt,) + E
-    t_start_perturb1 = Nt//4
-    t_end_perturb1 = t_start_perturb1 + int(perturb_len / dt)
-
-    t_start_perturb2 = 3*Nt//4
-    t_end_perturb2 = t_start_perturb2 + int(perturb_len / dt)
-
-    E_plot[t_start_perturb1:t_end_perturb1] += perturb_amp
-    E_plot[t_start_perturb2:t_end_perturb2] -= perturb_amp
-
-    Eshift = 20
-    Escale = 10
-    E_plot = Escale*E_plot + N + Eshift
-
-    _, spktimes = sim_lif_perturbation(J=Jmat, E=E, tstop=tstop, dt=dt, perturb_len=perturb_len, perturb_amp=perturb_amp)
-    ax3.plot(spktimes[:, 0], spktimes[:, 1], 'k|', markersize=0.5)
-    ax2.plot(J, g, 'ko')
-
-    ax4 = fig.add_subplot(gs[1, nrows//2+1:])
-    E = 0.5
-    _, spktimes = sim_lif_perturbation(J=Jmat, E=E, tstop=tstop, dt=dt, perturb_len=perturb_len, perturb_amp=perturb_amp)
-    ax4.plot(spktimes[:, 0], spktimes[:, 1], 'k|', markersize=0.5)
-
-
-    raster_yticks = (0, Ne, N)
-    raster_yticklabels = (0, Ne, N)
-
-    for axi in (ax3, ax4):
-        axi.plot(tplot, E_plot, 'k')
-        axi.set_xlim((0, tstop))
-        axi.set_ylim((0, N+Eshift+3.5*Escale))
-        axi.set_yticks(raster_yticks)
-        axi.set_xlabel('Time (ms/{})'.format(r'$\tau$'), fontsize=fontsize)
-    
-    ax3.set_ylabel('Neuron', fontsize=fontsize)
-    ax3.set_yticklabels(raster_yticklabels)
-    ax4.set_yticklabels([])
-
-    for axi in (ax1, ax2, ax3, ax4):
-        axi.tick_params(axis='x', labelsize=labelsize)
-        axi.tick_params(axis='y', labelsize=labelsize)
-
-    fig.tight_layout()
-    sns.despine(fig)
-    fig.savefig(savefile)
-
-
 def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.pdf')):
+
+    ### figure 3
 
     fig, ax = plt.subplots(3, 2, figsize=(3.4, 5))
 
@@ -280,8 +95,6 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
 
     g_plot = np.arange(-2, 2, .001)
     J_plot = np.arange(0, 10, .001)
-    # ax[1, 1].plot(g_plot, 2*np.ones(len(g_plot)), 'k')
-    # ax[1, 1].plot(0*J_plot, J_plot, 'k')
 
     ax[1, 1].set_xlabel('g', fontsize=fontsize)
     ax[1, 1].set_ylabel('J', fontsize=fontsize)
@@ -361,6 +174,8 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
 
 
 def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifurcation.pdf'), gbounds=(0, 1.), Emax=2, eps=1e-11):    
+
+    ### figure 4 c, d
 
     fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
@@ -540,6 +355,7 @@ def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifu
 
 def plot_fig_paradoxical_response_example(Ne=500, Ni=200, pE=0.5, pI=0.8, J=6, g=0.5, E=2, tstop=200, dt=.01, savefile=os.path.join(results_dir, 'fig_paradox_example.pdf')):
 
+    ### figure 5
 
     fig = plt.figure(figsize=(3.4, 3.7))
     gs = GridSpec(2, 3, figure=fig)
@@ -629,8 +445,10 @@ def plot_fig_paradoxical_response_example(Ne=500, Ni=200, pE=0.5, pI=0.8, J=6, g
 
 def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt=.01, trans=10, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
 
-    fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
+    ### figure 6
+
+    fig, ax = plt.subplots(1, 2, figsize=(3.4, 2))
 
     ### sims for paradoxical response
     J = 4
@@ -711,9 +529,7 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
 
     ### mean field boundaries
     fun1 = 2*(EE + gg*J - 1)/(gg*J) + gg*J - np.sqrt((gg*J)**2 + 4*J*gg + 4*h*EE)
-    # fun2 = np.sqrt((gg*J)**2 + 4*J*gg + 4*h*EE + 2*J*(J-2)) - 2*(EE + J*(1+gg) - J**2 / 4)/(gg*J) + gg*J
     fun2 = (-gg*J + np.sqrt((gg*J)**2 + 2*J**2 + 4*J*gg - 4*J + 4*h*EE ) )/2 - (J**2/4 - J*(1-gg) + EE)/(gg*J)
-
     # fun2[fun1 < 0] = np.inf
 
     # ax[0, 0].imshow(fun1, extent=(min(g), max(g), max(E), min(E)), origin='lower', aspect='auto', clim=(-1, 1))
@@ -731,19 +547,6 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
     ax[0].contour(g, E, fun1, [0], colors=colors[0])
     con = ax[0].contour(g, E, fun2, [0], colors=colors[0], label='1 loop')
     con.collections[0].set_label('1 loop')
-
-    # J = 2
-    # fun1 = 2*(EE + gg*J - 1)/(gg*J) + gg*J - np.sqrt((gg*J)**2 + 4*J*gg + 4*h*EE)
-    # # fun2 = np.sqrt((gg*J)**2 + 4*J*gg + 4*h*EE + 2*J*(J-2)) - 2*(EE + J*(1+gg) - J**2 / 4)/(gg*J) + gg*J
-    # fun2 = (-gg*J + np.sqrt((gg*J)**2 + 2*J**2 + 4*J*gg - 4*J + 4*h*EE ) )/2 - (J**2/4 - J*(1-gg) + EE)/(gg*J)
-    
-    # fun2[fun1 < 0] = np.inf
-
-    # # ax[0, 0].contour(g, E, fun1, [0], colors=colors[0])
-    # ax[0, 0].contour(g, E, fun2, [0], colors=colors[0], linestyles='dashed')
-    # ax[0, 0].set_ylim((0, max(E)))
-    # ax[0, 0].text(s='P', x=2*max(g)/3, y=max(E)/2, ha='center', va='center', fontsize=fontsize)
-
 
     ax[0].set_xlim((0, gmax-dg/2))
     ax[0].set_ylim((0, Emax-dE/2))
@@ -826,7 +629,6 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
 
     ### mean-field boundaries
     fun1 = 2*(EE + g*JJ - 1)/(g*JJ) + g*JJ - np.sqrt((g*JJ)**2 + 4*JJ*g + 4*h*EE)
-    # fun2 = np.sqrt((g*JJ)**2 + 4*JJ*g + 4*h*EE + 2*JJ*(JJ-2)) - 2*(EE + JJ*(1+g) - JJ**2 / 4)/(g*JJ) + g*JJ
     fun2 = (-g*JJ + np.sqrt((g*JJ)**2 + 2*JJ**2 + 4*JJ*g - 4*JJ + 4*h*EE ) )/2 - (JJ**2/4 - JJ*(1-g) + EE)/(g*JJ)
 
     ax[1].contour(J, E, fun1, [0], linestyles='dashed', colors=colors[0])
@@ -859,10 +661,10 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
 
 if __name__ == '__main__':
 
-    # plot_fig_exc_inh_weakly_coupled()
+    plot_fig_exc_inh_weakly_coupled()
 
-    # plot_fig_exc_inh_bifurcation()
+    plot_fig_exc_inh_bifurcation()
 
-    # plot_fig_paradoxical_response_example()
+    plot_fig_paradoxical_response_example()
 
     plot_fig_paradoxical_response()

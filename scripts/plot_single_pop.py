@@ -17,6 +17,7 @@ colors = ['k']+colors
 root_dir = '/Users/gkocker/Documents/projects/lif_stochastic'
 results_dir = os.path.join(root_dir, 'results')
 
+
 def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_homog.png'), Jmax=10, Emax=2):
 
     '''
@@ -41,17 +42,7 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
     Jbound = 2 + 27/16 * np.sqrt(3) * np.sqrt(1-E)
 
     ax[0, 0].plot(Jbound, E, 'k')
-
-    # ### shade two regions
-    # ### v_- and v_+ both exist: bistability
-    # J = np.arange(2, Jmax, .01)
-    # Ebound = J*(4-J)/4
-    # ax[0, 0].fill_between(J, Ebound, np.ones(len(J)), color=colors[1], alpha=0.5)
-
-    # ### v_+ only
-    # J = np.arange(-1, Jmax, .01)
-    # plt.fill_between(J, np.ones(len(J)), Emax*np.ones(len(J)), color=colors[2], alpha=0.5)
-
+    
     ax[0, 0].set_xlabel('J', fontsize=fontsize)
     ax[0, 0].set_ylabel('E', fontsize=fontsize)
 
@@ -383,4 +374,5 @@ def plot_fig_single_pop_bifurcation(savefile=os.path.join(results_dir, 'fig_homo
 if __name__ == '__main__':
     
     plot_fig_single_pop_weakly_coupled(savefile='fig_homog.pdf')
-    # plot_fig_single_pop_bifurcation()
+    
+    plot_fig_single_pop_bifurcation()
