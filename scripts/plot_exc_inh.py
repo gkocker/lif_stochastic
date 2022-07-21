@@ -7,7 +7,7 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.gridspec import GridSpec
 
-from src.model import hazard
+from src.model import intensity
 from src.theory import rate_fn, rate_fn_neg
 from src.sim import sim_lif_perturbation, sim_lif_perturbation_x, sim_lif_pop, create_spike_train
 from src.phase_plane import dv, phase_plane_plot
@@ -250,10 +250,10 @@ def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifu
     gbif = np.where( (J > 2*np.sqrt(1-E) + 2) * (grange_th <= (J-2)/J - 2 * np.sqrt(1-E)/J) )[0]
 
     v_mft_high[gbif] = ( J*(1-grange_th[gbif]) + np.sqrt(4*E + (grange_th[gbif]-1)*J*((grange_th[gbif]-1)*J + 4)) ) / 2
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     v_1loop = J*(1-grange_th) / 2 + 2/3 * np.sqrt((3/4*J*(1-grange_th))**2-9/4*J*(1-grange_th) + 3*E - 3/4)
-    r_1loop = 3/4 * hazard(v_1loop)
+    r_1loop = 3/4 * intensity(v_1loop)
 
     ax[0].plot(grange, r_sim, 'ko', alpha=0.5)
     ax[0].plot(grange, r_sim_stim, 'ko', alpha=0.5)
@@ -332,10 +332,10 @@ def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifu
     Ebif = np.where(Erange_th > 0)[0]
     v_mft_high[Ebif] = ( J*(1-g) + np.sqrt(4*Erange_th[Ebif] + (g-1)*J*((g-1)*J + 4)) ) / 2
 
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     v_1loop = J*(1-g) / 2 + 2/3 * np.sqrt((3/4*J*(1-g))**2-9/4*J*(1-g) + 3*Erange_th - 3/4)
-    r_1loop = 3/4 * hazard(v_1loop)
+    r_1loop = 3/4 * intensity(v_1loop)
 
 
     ax[1].plot(Erange, r_sim, 'ko', alpha=0.5)

@@ -2,22 +2,22 @@ import numpy as np
 import mpmath
 from scipy.optimize import root_scalar, minimize_scalar, fsolve
 from scipy.signal import fftconvolve
-from src.model import hazard
+from src.model import intensity
 
 def dv_mft_pif(v, J, E, B=1, v_th=1, p=1):
     
-    hazardv = hazard(v, B=B, v_th=v_th, p=p)
-    return -v * hazardv + E + np.dot(J, hazardv)
+    intensityv = intensity(v, B=B, v_th=v_th, p=p)
+    return -v * intensityv + E + np.dot(J, intensityv)
 
 
 def dv_mft_lif(v, J, E, B=1, v_th=1, p=1):
     
-    hazardv = hazard(v, B=B, v_th=v_th, p=p)
-    return -v * (1 + hazardv) + E + np.dot(J, hazardv)
+    intensityv = intensity(v, B=B, v_th=v_th, p=p)
+    return -v * (1 + intensityv) + E + np.dot(J, intensityv)
 
 
 def lif_mft_rhs(v, E=0, B=1, v_th=1, p=2):
-    return -v - v*hazard(v, B=B, v_th=v_th, p=p) + E
+    return -v - v*intensity(v, B=B, v_th=v_th, p=p) + E
 
 
 def lif_linear_1loop_fI(Erange, B=1, v_th=1, p=1):
@@ -31,16 +31,16 @@ def lif_linear_1loop_fI(Erange, B=1, v_th=1, p=1):
     
     NE = len(Erange)
     vbar = np.zeros((NE,))
-    hazardbar = np.zeros((NE,))
+    intensitybar = np.zeros((NE,))
     
     for i, e in enumerate(Erange):
         vbar[i] = fsolve(lif_mft_rhs, 1, args=(e,1,v_th,p))
-        hazardbar[i] = hazard(vbar[i], p=p, B=B, v_th=v_th)            
+        intensitybar[i] = intensity(vbar[i], p=p, B=B, v_th=v_th)            
 
     vbar_pos = vbar.copy() - v_th
     vbar_pos[vbar_pos < 0] = 0
 
-    return hazardbar, hazardbar - hazardbar/8
+    return intensitybar, intensitybar - intensitybar/8
 
 
 def lif_linear_loop_fI(Erange, B=1, v_th=1, p=1):
@@ -55,23 +55,23 @@ def lif_linear_loop_fI(Erange, B=1, v_th=1, p=1):
     for i, e in enumerate(Erange):
 
         vbar = fsolve(lif_mft_rhs, 1, args=(e,1,v_th,p))
-        hazardbar = hazard(vbar, p=p, B=B, v_th=v_th)    
+        intensitybar = intensity(vbar, p=p, B=B, v_th=v_th)    
 
         w, Dnn_full, Dvn_full, Dnv_full, Dvv_full = fixed_pt_iter_propagators_1pop(J=0, E=e, max_its=100)
 
-        if hazardbar > 0:
-            hazard_pr = 1
+        if intensitybar > 0:
+            intensity_pr = 1
         else:
-            hazard_pr = 0
+            intensity_pr = 0
         
         dw = w[1] - w[0]
         integral = np.sum( Dvn_full * Dnn_full.conj() ) * dw
 
         ind0 = np.argmin(np.abs(w))
-        r_1loop_tmp = hazardbar * Dnv_full[ind0] / (2*np.pi)**2 * integral
+        r_1loop_tmp = intensitybar * Dnv_full[ind0] / (2*np.pi)**2 * integral
 
-        r_mft.append(hazardbar)
-        r_1loop.append(hazardbar + np.real(r_1loop_tmp))
+        r_mft.append(intensitybar)
+        r_1loop.append(intensitybar + np.real(r_1loop_tmp))
 
     return r_mft, r_1loop
 
@@ -142,17 +142,17 @@ def fixed_pt_iter_propagators_1pop(J, E, max_its=100, w=np.linspace(-200, 200, 2
     else:
         vbar = E
         
-    hazardbar = hazard(vbar)
+    intensitybar = intensity(vbar)
     if vbar >= 1:
-        hazard_pr = 1
+        intensity_pr = 1
     else:
-        hazard_pr = 0
+        intensity_pr = 0
 
     ### define the bare propagators
-    Dnn = (1 + hazardbar +1j * w) / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dvn = -hazard_pr / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dnv = -vbar / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dvv = -1 / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+    Dnn = (1 + intensitybar +1j * w) / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dvn = -intensity_pr / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dnv = -vbar / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dvv = -1 / (1 + intensitybar + intensity_pr * vbar + 1j*w)
 
     ### solve for the full n, \tilde{n} propagator
     dw = w[1] - w[0]
@@ -164,7 +164,7 @@ def fixed_pt_iter_propagators_1pop(J, E, max_its=100, w=np.linspace(-200, 200, 2
         
         bub = (Dvv / Dnv) * (Dnn_full - Dnn) + Dvn
         bubint = dw * fftconvolve(Dnn_full, bub, mode='same')
-        Dnn_full = Dnn + hazard_pr / pi2 * Dnv * bub * bubint
+        Dnn_full = Dnn + intensity_pr / pi2 * Dnv * bub * bubint
 
     ### solve for the full v, \tilde{n} propagator: it is the bubble diagram
     Dvn_full = bub
@@ -172,10 +172,10 @@ def fixed_pt_iter_propagators_1pop(J, E, max_its=100, w=np.linspace(-200, 200, 2
     ### solve for the full v, \tilde{v} propagator
     Dvv_full = Dvv
     for i in range(max_its):
-        Dvv_full = Dvv + hazard_pr / pi2 * Dvv * Dvv_full * bubint
+        Dvv_full = Dvv + intensity_pr / pi2 * Dvv * Dvv_full * bubint
 
     ### solve for the full n, \tilde{v} propagator
-    Dnv_full = Dnv + hazard_pr / pi2 * Dnv * Dvv_full * bubint
+    Dnv_full = Dnv + intensity_pr / pi2 * Dnv * Dvv_full * bubint
 
     return w, Dnn_full, Dvn_full, Dnv_full, Dvv_full
 
@@ -187,18 +187,18 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
 
     vbar = np.sqrt(J*r_th + E)
     if vbar > 1:
-        hazardbar = vbar - 1
-        hazard_pr = 1
+        intensitybar = vbar - 1
+        intensity_pr = 1
     else:
-        hazardbar = 0
-        hazard_pr = 0
+        intensitybar = 0
+        intensity_pr = 0
         raise Exception('need positive rate')
 
     ### define the bare propagators
-    Dnn = (1 + hazardbar +1j * w) / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dvn = -hazard_pr / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dnv = -vbar / (1 + hazardbar + hazard_pr * vbar + 1j*w)
-    Dvv = -1 / (1 + hazardbar + hazard_pr * vbar + 1j*w)
+    Dnn = (1 + intensitybar +1j * w) / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dvn = -intensity_pr / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dnv = -vbar / (1 + intensitybar + intensity_pr * vbar + 1j*w)
+    Dvv = -1 / (1 + intensitybar + intensity_pr * vbar + 1j*w)
 
     ### solve for the full n, \tilde{n} propagator
     dw = w[1] - w[0]
@@ -210,7 +210,7 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
         
         bub = (Dvv / Dnv) * (Dnn_full - Dnn) + Dvn
         bubint = dw * fftconvolve(Dnn_full, bub, mode='same')
-        Dnn_full = Dnn + hazard_pr / pi2 * Dnv * bub * bubint
+        Dnn_full = Dnn + intensity_pr / pi2 * Dnv * bub * bubint
 
     ### solve for the full v, \tilde{n} propagator: it is the bubble diagram
     Dvn_full = bub
@@ -218,10 +218,10 @@ def fixed_pt_iter_propagators_1pop_true(J, E, max_its=10, w=np.linspace(-200, 20
     ### solve for the full v, \tilde{v} propagator
     Dvv_full = Dvv
     for i in range(max_its):
-        Dvv_full = Dvv + hazard_pr / pi2 * Dvv * Dvv_full * bubint
+        Dvv_full = Dvv + intensity_pr / pi2 * Dvv * Dvv_full * bubint
 
     ### solve for the full n, \tilde{v} propagator
-    Dnv_full = Dnv + hazard_pr / pi2 * Dnv * Dvv_full * bubint
+    Dnv_full = Dnv + intensity_pr / pi2 * Dnv * Dvv_full * bubint
 
     if return_rate:
         return r_th, w, Dnn_full, Dvn_full, Dnv_full, Dvv_full
@@ -241,21 +241,21 @@ def rate_1pop_1loop(J, E):
     else:
         vbar = E
         
-    hazardbar = hazard(vbar)
+    intensitybar = intensity(vbar)
     if vbar >= 1:
-        hazard_pr = 1
+        intensity_pr = 1
     else:
-        hazard_pr = 0
+        intensity_pr = 0
 
-    int_factor = -np.pi * (2 + 2*hazardbar + hazard_pr*vbar) / (1 + hazardbar + hazard_pr*vbar)
+    int_factor = -np.pi * (2 + 2*intensitybar + intensity_pr*vbar) / (1 + intensitybar + intensity_pr*vbar)
     pi2 = (2*np.pi)**-2
     pi3 = (2*np.pi)**-3
-    Dnv = -vbar / (1+hazardbar+vbar)
-    Dvv = -1 / (1+hazardbar+vbar)
+    Dnv = -vbar / (1+intensitybar+vbar)
+    Dvv = -1 / (1+intensitybar+vbar)
 
-    r_1loop = hazardbar * pi2 * Dnv * int_factor / (1 + J*Dnv*(hazard_pr*pi3*Dvv*int_factor) )
+    r_1loop = intensitybar * pi2 * Dnv * int_factor / (1 + J*Dnv*(intensity_pr*pi3*Dvv*int_factor) )
 
-    return vbar, hazardbar, r_1loop
+    return vbar, intensitybar, r_1loop
 
 
 def lif_rate_homog(J, E, n_max=20):

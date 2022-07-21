@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import welch
 import seaborn as sns
 
-from src.model import hazard
+from src.model import intensity
 from src.theory import lif_rate_homog, fixed_pt_iter_propagators_1pop, fixed_pt_iter_propagators_1pop_true
 from src.sim import sim_lif_perturbation, sim_lif_pop, create_spike_train
 
@@ -178,10 +178,10 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
 
     Jbif = np.where(Jrange_th > 2*(1+np.sqrt(1-E)))[0][0]
     v_mft_high[Jbif:] = (Jrange_th[Jbif:] + np.sqrt(Jrange_th[Jbif:]**2 + 4*(E - Jrange_th[Jbif:]))) / 2
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     v_1loop = Jrange_th / 2 + 2/3 * np.sqrt((3/4*Jrange_th)**2-9/4*Jrange_th + 3*E - 3/4)
-    r_1loop = 3/4 * hazard(v_1loop)
+    r_1loop = 3/4 * intensity(v_1loop)
 
     ax[0, 2].plot(Jrange, r_sim, 'ko', alpha=0.5)
     ax[0, 2].plot(Jrange, r_sim_stim, 'ko', alpha=0.5)
@@ -228,13 +228,13 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
     r_mft_high = v_mft_high.copy()
 
     v_1loop = g / 2 + 2/3 * np.sqrt((3/4*g)**2-9/4*g + 3*Erange_th - 3/4)
-    r_1loop = 3/4 * hazard(v_1loop)
+    r_1loop = 3/4 * intensity(v_1loop)
 
 
     Ebif = np.where(Erange_th > g*(4-g)/4)[0][0]
 
     v_mft_high[Ebif:] = (g + np.sqrt(g**2 + 4*(Erange_th[Ebif:] - g))) / 2
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     ax[1, 2].plot(Erange, r_sim, 'ko', alpha=0.5)
     ax[1, 2].plot(Erange, r_sim_stim, 'ko', alpha=0.5)
@@ -307,7 +307,7 @@ def plot_fig_single_pop_bifurcation(savefile=os.path.join(results_dir, 'fig_homo
 
     Jbif = np.where(Jrange_th > 2*(1+np.sqrt(1-E)))[0][0]
     v_mft_high[Jbif:] = (Jrange_th[Jbif:] + np.sqrt(Jrange_th[Jbif:]**2 + 4*(E - Jrange_th[Jbif:]))) / 2
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     ax[0].plot(Jrange, r_sim, 'ko', alpha=0.5)
     ax[0].plot(Jrange, r_sim_stim, 'ko', alpha=0.5)
@@ -355,7 +355,7 @@ def plot_fig_single_pop_bifurcation(savefile=os.path.join(results_dir, 'fig_homo
     Ebif = np.where(Erange_th > g*(4-g)/4)[0][0]
 
     v_mft_high[Ebif:] = (g + np.sqrt(g**2 + 4*(Erange_th[Ebif:] - g))) / 2
-    r_mft_high = hazard(v_mft_high)
+    r_mft_high = intensity(v_mft_high)
 
     ax[1].plot(Erange, r_sim, 'ko', alpha=0.5)
     ax[1].plot(Erange, r_sim_stim, 'ko', alpha=0.5)

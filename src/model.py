@@ -1,6 +1,6 @@
 import numpy as np
 
-def hazard(v, B=1, v_th=1, p=1):
+def intensity(v, B=1, v_th=1, p=1):
     x = v - v_th 
 
     if len(np.shape(x)) > 0:
@@ -12,7 +12,7 @@ def hazard(v, B=1, v_th=1, p=1):
     return B * x**p
 
 
-def hazard_match_linear_reset_mft(v, B=1, v_th=1, p=1):
+def intensity_match_linear_reset_mft(v, B=1, v_th=1, p=1):
 
     x = v - v_th 
 

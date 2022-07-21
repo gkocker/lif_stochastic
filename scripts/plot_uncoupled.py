@@ -9,7 +9,7 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 import matplotlib as mpl
 from matplotlib.gridspec import GridSpec
 
-from src.model import hazard, hazard_match_linear_reset_mft
+from src.model import intensity, intensity_match_linear_reset_mft
 from src.theory import lif_linear_full_fI, lif_linear_1loop_fI
 from src.sim import sim_lif_pop, create_spike_train
 
@@ -53,7 +53,7 @@ def sim_lif_1neuron(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, E
 
         v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n) - n*(v[t-1]-v_r)
 
-        lam = hazard(v[t], B=B, v_th=v_th, p=p)
+        lam = intensity(v[t], B=B, v_th=v_th, p=p)
         if lam > 1/dt:
             lam = 1/dt
             
@@ -67,7 +67,7 @@ def sim_lif_1neuron(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, E
     return v, spktimes
 
 
-def sim_linear_reset_1neuron(J, E, hazard_fun, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim=0):
+def sim_linear_reset_1neuron(J, E, intensity_fun, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim=0):
 
     Nt = int(tstop / dt)
     Ntstim = int(tstim / dt)
@@ -95,7 +95,7 @@ def sim_linear_reset_1neuron(J, E, hazard_fun, tstop=100, dt=.01, B=1, v_th=1, p
 
         v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n) - n*v_th
 
-        lam = hazard_fun(v[t], B=B, v_th=v_th, p=p)
+        lam = intensity_fun(v[t], B=B, v_th=v_th, p=p)
         if lam > 1/dt:
             lam = 1/dt
             
@@ -201,7 +201,7 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
         else:
             var_lif.append(0)
 
-        v, spktimes = sim_linear_reset_1neuron((0), E, hazard, tstop=tstop, dt=dt, p=1)
+        v, spktimes = sim_linear_reset_1neuron((0), E, intensity, tstop=tstop, dt=dt, p=1)
         rates_linear.append(len(spktimes) / tstop)
 
         if len(spktimes) > 0:
@@ -211,7 +211,7 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
         else:
             var_linear.append(0)
 
-        v, spktimes = sim_linear_reset_1neuron((0), E, hazard_match_linear_reset_mft, tstop=tstop, dt=dt, p=1)
+        v, spktimes = sim_linear_reset_1neuron((0), E, intensity_match_linear_reset_mft, tstop=tstop, dt=dt, p=1)
         rates_linear_match_v.append(len(spktimes) / tstop)
         if len(spktimes) > 0:
             spktimes[:, 0] *= dt
@@ -223,8 +223,8 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
     Erange_th = np.arange(min(Erange), max(Erange), .01)
     rates_lif_mft, rates_lif_1loop = lif_linear_1loop_fI(Erange_th, p=p, v_th=v_th)
     rates_lif_full = lif_linear_full_fI(Erange_th)
-    rates_linear_mft = hazard((Erange_th+1)/2)
-    rates_linear_match_mft = hazard_match_linear_reset_mft(np.sqrt(Erange_th))
+    rates_linear_mft = intensity((Erange_th+1)/2)
+    rates_linear_match_mft = intensity_match_linear_reset_mft(np.sqrt(Erange_th))
 
     ax3.plot(Erange, rates_lif, 'o', color=colors[0], alpha=0.3)
     ax3.plot(Erange, rates_linear, 'o', color=colors[1], alpha=0.3)
