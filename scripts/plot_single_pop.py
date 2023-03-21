@@ -39,10 +39,15 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
 
     ### phase diagram to one loop
     E = np.arange(-1, 1, .01)
-    Jbound = 2 + 27/16 * np.sqrt(3) * np.sqrt(1-E)
+    
+    Jbound = 9/4 + np.sqrt(5*(1-E))
 
     ax[0, 0].plot(Jbound, E, 'k')
     
+    Jbound = 9/4 - np.sqrt(5*(1-E))
+    ax[0, 0].plot(Jbound, E, 'k--')
+
+
     ax[0, 0].set_xlabel('J', fontsize=fontsize)
     ax[0, 0].set_ylabel('E', fontsize=fontsize)
 
@@ -100,7 +105,7 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
     # ax[1, 0].plot(tstop/2, N+Eshift+perturb_amp*Escale, 'ks')
 
 
-    g = 2 + 27/16 * np.sqrt(3) * np.sqrt(1-E) + 1
+    g = 6
     J = np.random.binomial(n=1, p=connection_prob, size=(N,N)) * g / connection_prob / N
 
     _, spktimes = sim_lif_perturbation(J=J, E=E, tstop=tstop, dt=dt, perturb_len=perturb_len, perturb_amp=perturb_amp)
@@ -180,8 +185,10 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
     v_mft_high[Jbif:] = (Jrange_th[Jbif:] + np.sqrt(Jrange_th[Jbif:]**2 + 4*(E - Jrange_th[Jbif:]))) / 2
     r_mft_high = intensity(v_mft_high)
 
-    v_1loop = Jrange_th / 2 + 2/3 * np.sqrt((3/4*Jrange_th)**2-9/4*Jrange_th + 3*E - 3/4)
-    r_1loop = 3/4 * intensity(v_1loop)
+    v_1loop = (1 + 4*Jrange_th + np.sqrt(1 + 80*E + 8*Jrange_th*(2*Jrange_th-9))) / 10
+    r_1loop = intensity(v_1loop)
+    # v_1loop = Jrange_th / 2 + 2/3 * np.sqrt((3/4*Jrange_th)**2-9/4*Jrange_th + 3*E - 3/4)
+    # r_1loop = 3/4 * intensity(v_1loop)
 
     ax[0, 2].plot(Jrange, r_sim, 'ko', alpha=0.5)
     ax[0, 2].plot(Jrange, r_sim_stim, 'ko', alpha=0.5)
@@ -227,9 +234,8 @@ def plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_h
     v_mft_high = 0 * Erange_th
     r_mft_high = v_mft_high.copy()
 
-    v_1loop = g / 2 + 2/3 * np.sqrt((3/4*g)**2-9/4*g + 3*Erange_th - 3/4)
-    r_1loop = 3/4 * intensity(v_1loop)
-
+    v_1loop = (1 + 4*g + np.sqrt(1 + 80*Erange_th + 8*g*(2*g-9))) / 10
+    r_1loop = intensity(v_1loop)
 
     Ebif = np.where(Erange_th > g*(4-g)/4)[0][0]
 
@@ -373,6 +379,6 @@ def plot_fig_single_pop_bifurcation(savefile=os.path.join(results_dir, 'fig_homo
 
 if __name__ == '__main__':
     
-    plot_fig_single_pop_weakly_coupled(savefile='fig_homog.pdf')
+    plot_fig_single_pop_weakly_coupled(savefile=os.path.join(results_dir, 'fig_homog.pdf'))
     
-    plot_fig_single_pop_bifurcation()
+    # plot_fig_single_pop_bifurcation()

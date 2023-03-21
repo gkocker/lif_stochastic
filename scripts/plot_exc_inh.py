@@ -45,7 +45,8 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
         # gbound = (J-2)/J + 2*np.sqrt((1-E) / J**2)
         # ax[0, 1].plot(gbound, E, ':', color=colors[i])
 
-        gbound = 1 - 2/J - 4/np.sqrt(3)*np.sqrt((1-E)/(J**2))
+        # gbound = 1 - 2/J - 4/np.sqrt(3)*np.sqrt((1-E)/(J**2))
+        gbound = 1 - 9/(4*J) -np.sqrt(5) * np.sqrt(1-E) / J
 
         ax[0, 1].plot(gbound, E, color=colors[i], label='1 loop')
 
@@ -65,12 +66,15 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
     ax[0, 1].set_ylim((-1, 2))
 
     ### E-J phase diagram
+    g = .3
     J = np.arange(0, 10, .001)
-    E_min_mft = (J/4)*(4-J)
-    E_min_mft[J < 2] = np.nan
+    E_min_mft = (J*(1-g)/4)*(4-J*(1-g))
+    Jpeak = np.argmin(np.abs(E_min_mft - 1))
+    E_min_mft[:Jpeak] = np.nan
 
-    E_min_1loop = 1/16 * (4 + 12*J - 3*J**2)
-    E_min_1loop[J < 2] = np.nan
+    E_min_1loop = (-1 - 8*(-1 + g)*J*(9 + 2*(-1 + g)*J)) / 80
+    Jpeak = np.argmin(np.abs(E_min_1loop - 1))
+    E_min_1loop[:Jpeak] = np.nan
 
     ax[1, 0].plot(J, E_min_mft, 'k:')
     ax[1, 0].plot(J, E_min_1loop, 'k')
@@ -90,7 +94,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
     gbound_mft = (-2 + J)/J - 2*np.sqrt((1-E))/J
     ax[1, 1].plot(gbound_mft, J, 'k:', label='mean field')
     
-    gbound_1loop = -((4*np.sqrt(-((-1 + E)/J**2)))/np.sqrt(3)) + (-2 + J)/J
+    gbound_1loop = -np.sqrt(5) * np.sqrt((1-E)/J**2) + (-9+4*J)/(4*J)
     ax[1, 1].plot(gbound_1loop, J, 'k', label='1 loop')
 
     g_plot = np.arange(-2, 2, .001)
@@ -252,8 +256,8 @@ def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifu
     v_mft_high[gbif] = ( J*(1-grange_th[gbif]) + np.sqrt(4*E + (grange_th[gbif]-1)*J*((grange_th[gbif]-1)*J + 4)) ) / 2
     r_mft_high = intensity(v_mft_high)
 
-    v_1loop = J*(1-grange_th) / 2 + 2/3 * np.sqrt((3/4*J*(1-grange_th))**2-9/4*J*(1-grange_th) + 3*E - 3/4)
-    r_1loop = 3/4 * intensity(v_1loop)
+    v_1loop = (1 + 4*J*(1-grange_th) + np.sqrt(1 + 80*E + 8*J*(1-grange_th)*(2*J*(1-grange_th)-9))) / 10
+    r_1loop = intensity(v_1loop)
 
     ax[0].plot(grange, r_sim, 'ko', alpha=0.5)
     ax[0].plot(grange, r_sim_stim, 'ko', alpha=0.5)
@@ -334,9 +338,12 @@ def plot_fig_exc_inh_bifurcation(savefile=os.path.join(results_dir, 'fig_ei_bifu
 
     r_mft_high = intensity(v_mft_high)
 
-    v_1loop = J*(1-g) / 2 + 2/3 * np.sqrt((3/4*J*(1-g))**2-9/4*J*(1-g) + 3*Erange_th - 3/4)
-    r_1loop = 3/4 * intensity(v_1loop)
 
+    v_1loop = (1 + 4*J*(1-g) + np.sqrt(1 + 80*Erange_th + 8*J*(1-g)*(2*J*(1-g)-9))) / 10
+    r_1loop = intensity(v_1loop)
+
+    # v_1loop = J*(1-g) / 2 + 2/3 * np.sqrt((3/4*J*(1-g))**2-9/4*J*(1-g) + 3*Erange_th - 3/4)
+    # r_1loop = 3/4 * intensity(v_1loop)
 
     ax[1].plot(Erange, r_sim, 'ko', alpha=0.5)
     ax[1].plot(Erange, r_sim_stim, 'ko', alpha=0.5)
@@ -443,7 +450,7 @@ def plot_fig_paradoxical_response_example(Ne=500, Ni=200, pE=0.5, pI=0.8, J=6, g
     return None
 
 
-def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt=.01, trans=10, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
+def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt=.01, trans=10, Npts=12, savefile=os.path.join(results_dir, 'fig_paradox.pdf')):
 
 
     ### figure 6
@@ -455,12 +462,12 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
     N = Ne + Ni
 
     perturb_ind = range(Ne, N)
-    perturb_amp = (0.01, )
+    perturb_amp = (0.1, )
     Nperturb = len(perturb_amp)
     perturb_len = tstop // (Nperturb + 1)
 
-    Npts = 12
     simfile = os.path.join(results_dir, 'sim_paradox_loop_g_E_J={}_perturb_amp={}_Npts={}.pkl'.format(J, perturb_amp[0], Npts))
+    print(simfile)
 
     if os.path.exists(simfile):
         with open(simfile, 'rb') as f:
@@ -514,7 +521,7 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
     dE = E_vec[1] - E_vec[0]
     dg = g_vec[1] - g_vec[0]
     im1 = ax[0].imshow(r_diff, origin='lower', extent=(gmin-dg/2, gmax-dg/2, Emin-dE/2, Emax-dE/2), clim=(-cmax, cmax), cmap='bwr', aspect='auto')
-    # fig.colorbar(im1, ax=ax[0, 1], shrink=0.8)
+    fig.colorbar(im1, ax=ax[1], shrink=0.8)
 
     ### contour plot of the region with monostable paradoxical responses
 
@@ -540,9 +547,8 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
     # ax[0].clabel(con, con.levels, inline=True, fmt='mean\nfield', fontsize=fontsize-2)
 
     ### one-loop boundaries
-    fun1 = 2*(-1 + gg*J + 4/3*EE - 1/3)/(gg*J) + gg*J - np.sqrt((gg*J)**2 + 4*gg*J + 16/3*h*EE - 4/3)
-    fun2 = (-gg*J + np.sqrt((gg*J)**2 + 2*J**2 + 4*J*gg - 4*J + 16/3*h*EE - 4/3) )/2 - (J**2/4 - J*(1-gg) + 4/3*EE - 1/3)/(gg*J)
-    # fun2[fun1 < 0] = np.inf
+    fun1 = 1+80*EE - 8*J*(9-2*J - gg*(9+4*gg*J -np.sqrt(1+80*EE*h+8*J*(-9+4*J +gg*(9+2*gg*J))))) # peak
+    fun2 = 10 + gg*J*(-9 - 4*gg*J + np.sqrt(1 + 80*h*EE + 8*gg*J*(9 + 2*gg*J))) - 10*EE # threshold
 
     ax[0].contour(g, E, fun1, [0], colors=colors[0])
     con = ax[0].contour(g, E, fun2, [0], colors=colors[0], label='1 loop')
@@ -635,9 +641,8 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
     ax[1].contour(J, E, fun2, [0], linestyles='dashed', colors=colors[0])
 
     ### one-loop boundaries
-    fun1 = 2*(-1 + g*JJ + 4/3*EE - 1/3)/(g*JJ) + g*JJ - np.sqrt((g*JJ)**2 + 4*g*JJ + 16/3*h*EE - 4/3)
-    fun2 = (-g*JJ + np.sqrt((g*JJ)**2 + 2*JJ**2 + 4*JJ*g - 4*J + 16/3*h*EE - 4/3) )/2 - (JJ**2/4 - JJ*(1-g) + 4/3*EE - 1/3)/(g*JJ)
-    fun2[fun1 < 0] = np.inf
+    fun1 = 1+80*EE - 8*JJ*(9-2*JJ - g*(9+4*g*JJ -np.sqrt(1+80*EE*h+8*JJ*(-9+4*JJ +g*(9+2*g*JJ))))) # peak
+    fun2 = 10 + g*JJ*(-9 - 4*g*JJ + np.sqrt(1 + 80*h*EE + 8*g*JJ*(9 + 2*g*JJ))) - 10*EE # threshold
 
     ax[1].contour(J, E, fun1, [0], colors=colors[0])
     ax[1].contour(J, E, fun2, [0], colors=colors[0])
@@ -661,10 +666,10 @@ def plot_fig_paradoxical_response(Ne=500, Ni=200, pE=0.5, pI=0.8, tstop=5000, dt
 
 if __name__ == '__main__':
 
-    plot_fig_exc_inh_weakly_coupled()
+    # plot_fig_exc_inh_weakly_coupled()
 
-    plot_fig_exc_inh_bifurcation()
+    # plot_fig_exc_inh_bifurcation()
 
-    plot_fig_paradoxical_response_example()
+    # plot_fig_paradoxical_response_example()
 
-    plot_fig_paradoxical_response()
+    plot_fig_paradoxical_response(savefile=os.path.join(results_dir, 'fig_paradox_cbar.pdf'))

@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 from scipy.signal import welch
 import seaborn as sns
 
+from src.model import intensity
 from src.theory import lif_rate_homog, fixed_pt_iter_propagators_1pop_true
 from src.sim import sim_lif_pop, create_spike_train
 
 fontsize = 10
-labelsize = 8
+labelsize = 9
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 colors = ['k']+colors
@@ -162,10 +163,10 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
     ax[0, 1].plot(w, Cw_tree, 'k:', linewidth=2, label='mean field')
 
     ### theory - one-loop effective action
-    vbar = (J*(1-g))/2 + 2/3*np.sqrt((3/4*J*(1-g))**2 - 9/4*J*(1-g) + 3*E - 3/4)
-    f = 3/4*(vbar - 1)
-    if vbar < 1:
-        f = 0
+    
+    vbar = (1 + 4*J*(1-g) + np.sqrt(1 + 80*E + 8*J*(1-g)*(2*J*(1-g)-9))) / 10
+    f = intensity(vbar)
+
     Cw_tree = f * (vbar**2 + w**2) / (4*vbar**2 + w**2)
     # vbar = np.sqrt(J*(1-g)*r_th + E)
     # Cw_tree = (vbar - 1) * (vbar**2 + w**2) / (4*vbar**2 + w**2)
@@ -266,9 +267,8 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
     var_spk_low = 0*grange_th
     # f_low[vbar > 1] = np.nan
 
-    vbar = (J*(1-grange_th))/2 + 2/3*np.sqrt((3/4*J*(1-grange_th))**2 - 9/4*J*(1-grange_th) + 3*E - 3/4)
-    f_1loop = 3/4*(vbar - 1)
-    f_1loop[vbar < 1] = 0
+    vbar = (1 + 4*J*(1-grange_th) + np.sqrt(1 + 80*E + 8*J*(1-grange_th)*(2*J*(1-grange_th)-9))) / 10
+    f_1loop = intensity(vbar)
     f_1loop[np.isnan(vbar)] = 0
     var_spk_1loop = f_1loop / 4
     # Cw_tree = f * (vbar**2 + w**2) / (4*vbar**2 + w**2)
@@ -385,9 +385,8 @@ def plot_ei_fluctuations(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10, Est
     f_low[Erange_th < 1] = 0
     # var_spk_tree = (np.sqrt(J*(1-g)*r_th + Erange_th)-1) / 4   
 
-    vbar = (J*(1-g))/2 + 2/3*np.sqrt((3/4*J*(1-g))**2 - 9/4*J*(1-g) + 3*Erange_th - 3/4)
-    f_1loop = 3/4*(vbar - 1)
-    f_1loop[vbar < 1] = 0
+    vbar = (1 + 4*J*(1-g) + np.sqrt(1 + 80*Erange_th + 8*J*(1-g)*(2*J*(1-g)-9))) / 10
+    f_1loop = intensity(vbar)
     f_1loop[np.isnan(vbar)] = 0
     var_spk_1loop = f_1loop / 4
 
@@ -513,9 +512,8 @@ def plot_ei_fluctuations_test(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10
 
     ### theory - approximate power spectrum, tree 
     vbar = (J*(1-g) + np.sqrt((J*(1-g))**2 + 4*(E-J*(1-g)))) / 2
-    f = vbar - 1
-    if vbar < 1:
-        f = 0
+    f = intensity(vbar)
+
     Cw_tree = f * (vbar**2 + w**2) / ((2*vbar - g)**2 + w**2)
     # vbar = np.sqrt(J*(1-g)*r_th + E)
     # Cw_tree = (vbar - 1) * (vbar**2 + w**2) / (4*vbar**2 + w**2)
@@ -802,6 +800,6 @@ def plot_ei_fluctuations_test(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10
 
 if __name__ == '__main__':
 
-    plot_ei_fluctuations_test()
+    plot_ei_fluctuations()
     
     # plot_propagators_resum()

@@ -236,9 +236,9 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
     ax3.set_ylabel('Rate (norm.)', fontsize=fontsize)
 
     ### plot the mean-field, 1-loop, and exact rates for the LIF
-    vbar_1loop = 2/3 * np.sqrt(3*(Erange_th-1/4))
-    rates_lif_1loop = 3/4*(vbar_1loop-1)
-    rates_lif_1loop[vbar_1loop < 1] = 0
+    vbar_1loop = (1+np.sqrt(1+80*Erange_th)) / 10
+    rates_lif_1loop = intensity(vbar_1loop)
+    # rates_lif_1loop[vbar_1loop < 1] = 0
 
     ax4.plot(Erange, rates_lif, 'o', color=colors[0], alpha=0.3)
     ax4.plot(Erange_th, rates_lif_mft, ':', color=colors[0], label='mean field')
@@ -250,12 +250,8 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
     ax4.legend(loc=0, frameon=False, fontsize=fontsize)
 
     ### plot one-loop correction for the three models
-    C = 9 - 36*Erange_th + np.sqrt(3)*np.sqrt(59 - 216*Erange_th + 432*(Erange_th**2))
-    vbar_match_1loop = 1/2 + np.cbrt(2/(3*C)) - np.cbrt(C/144)
-    phi_1 = 2*vbar_match_1loop - 1
-    phi_2 = 2
-
-    r_match_1loop = vbar_match_1loop * (vbar_match_1loop - 1) + ((vbar_match_1loop-1)*(2*vbar_match_1loop-1)**2) / 4
+    # C = 9 - 36*Erange_th + np.sqrt(3)*np.sqrt(59 - 216*Erange_th + 432*(Erange_th**2))
+    r_match_1loop = (np.sqrt(Erange_th)+1/4)*(np.sqrt(Erange_th)-1)    
     r_match_1loop[Erange_th < 1] = 0.
 
     # r_match_1loop = (1+phibar) * phi_2/2 * phibar * phi_1**2 / (1+phibar+phi_1*vbar)**3
