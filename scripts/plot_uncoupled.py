@@ -236,7 +236,7 @@ def plot_fig_intro_uncoupled(savefile=os.path.join(results_dir, 'fig1.pdf')):
     ax3.set_ylabel('Rate (norm.)', fontsize=fontsize)
 
     ### plot the mean-field, 1-loop, and exact rates for the LIF
-    vbar_1loop = (1+np.sqrt(8/5+80*Erange_th)) / 10
+    vbar_1loop = (1+np.sqrt(1+80*Erange_th)) / 10
     rates_lif_1loop = intensity(vbar_1loop)
     # rates_lif_1loop[vbar_1loop < 1] = 0
 
