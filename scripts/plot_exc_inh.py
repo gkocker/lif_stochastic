@@ -94,7 +94,7 @@ def plot_fig_exc_inh_weakly_coupled(savefile=os.path.join(results_dir, 'fig_ei.p
     gbound_mft = (-2 + J)/J - 2*np.sqrt((1-E))/J
     ax[1, 1].plot(gbound_mft, J, 'k:', label='mean field')
     
-    gbound_1loop = -np.sqrt(5) * np.sqrt((1-E)/J**2) + (-9+4*J)/(4*J)
+    gbound_1loop = -np.sqrt(5) * np.sqrt((1-E))/J + (-9+4*J)/(4*J)
     ax[1, 1].plot(gbound_1loop, J, 'k', label='1 loop')
 
     g_plot = np.arange(-2, 2, .001)

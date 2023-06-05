@@ -259,7 +259,7 @@ def create_spike_train(spktimes, neuron=0, dt=.01, tstop=100):
     
     spktimes_tmp = spktimes[spktimes[:, 1] == neuron][:, 0]
     
-    Nt = int(tstop/dt)
+    Nt = int(tstop/dt)+1
     spktrain = np.zeros((Nt,))
     
     spk_indices = spktimes_tmp / dt
