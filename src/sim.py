@@ -55,6 +55,7 @@ def sim_lif_pop(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim
     v[0] = v0
     
     n = np.zeros(N,)
+    spkind = []
     spktimes = []
 
     for t in range(1, Nt):
@@ -64,7 +65,52 @@ def sim_lif_pop(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim
         else:
             Et = E
 
-        v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n) - n*(v[t-1]-v_r)
+        v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n) #- n*(v[t-1]-v_r)
+        v[t, spkind] = v_r
+
+        lam = intensity(v[t], B=B, v_th=v_th, p=p)
+        lam[lam > 1/dt] = 1/dt
+            
+        n = np.random.binomial(n=1, p=dt*lam)
+
+        spkind = np.where(n > 0)[0]
+        for i in spkind:
+            spktimes.append([t*dt, i])
+            
+    spktimes = np.array(spktimes)
+    return v, spktimes
+
+
+def sim_lif_pop_exact_reset(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, tstim=0, Estim=0, v0=0):
+
+    Nt = int(tstop / dt)
+    Ntstim = int(tstim / dt)
+
+    if len(np.shape(J)) > 1:
+        N = np.shape(J)[0]
+    else:
+        N = 1
+    
+    if len(np.shape(E)) == 0:
+        E = E * np.ones(N,)
+    elif len(E) < N:
+        raise Exception('Need either a scalar or length N input E')
+
+    v = np.zeros((Nt,N))
+    v[0] = v0
+    
+    n = np.zeros(N,)
+    spktimes = []
+
+    for t in range(1, Nt):
+
+        if t < Ntstim:
+            Et = Estim
+        else:
+            Et = E
+
+        v[t] = v[t-1] + dt*(-v[t-1] + Et) + np.dot(J, n)
+        v[t, n.astype('int')] = v_r
 
         lam = intensity(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt
@@ -120,7 +166,8 @@ def sim_lif_pop_fully_connected(J, E, N=1000, tstop=100, dt=.01, B=1, v_th=1, p=
 def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, perturb_start=None, perturb_len=10, perturb_amp=1.5, perturb_ind=None):
 
     '''
-    simulate an LIF network. at times tstop/4 a postive perturbation is applied, and at 3/4 tstop a negative perturbation
+    Simulate an LIF network with a perturbation to E.
+    If perturb_start=None, at times tstop/4 a postive perturbation is applied, and at 3/4 tstop a negative perturbation.
 
     J: connectivity matrix, NxN
     E: resting potential
@@ -162,18 +209,24 @@ def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, pertu
     v = np.zeros((Nt,N))
     v[0] = np.random.rand(N,)
     n = np.zeros(N,)
+    spkind = []
+
     spktimes = []
 
+    E = E0.copy()
+
     for t in range(1, Nt):
-        
-        E = E0.copy()
 
         if (t >= t_start_perturb1) and (t < t_end_perturb1):
-            E[perturb_ind] += perturb_amp
+            E[perturb_ind] = E0[perturb_ind] + perturb_amp
         elif (t >= t_start_perturb2) and (t < t_end_perturb2):
-            E[perturb_ind] -= perturb_amp
+            E[perturb_ind] = E0[perturb_ind] - perturb_amp
+        else:
+            E[perturb_ind] = E0[perturb_ind]
 
-        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
+        # v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
+        v[t] = v[t-1] + dt*(-v[t-1] + E) + J.dot(n)
+        v[t, spkind] = v_r # reset
 
         lam = intensity(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt
@@ -191,7 +244,7 @@ def sim_lif_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, pertu
 def sim_lif_perturbation_x(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, perturb_amp=1.5, perturb_ind=None):
 
     '''
-    simulate an LIF network. the resting potential E undergoes a series of step perturbations.
+    simulate an LIF network. the resting potential E undergoes a series of step perturbations, evenly spaced in time.
     
     J: connectivity matrix, NxN
     E: resting potential
@@ -234,7 +287,70 @@ def sim_lif_perturbation_x(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, per
         if t > perturb_len:
             E[perturb_ind] += perturb_amp[(t - perturb_len) // perturb_len]
 
-        v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
+        # v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n)
+        v[t] = v[t-1] + dt*(-v[t-1] + E) + J.dot(n)
+        v[t, n.astype('int')] = v_r
+
+        lam = intensity(v[t], B=B, v_th=v_th, p=p)
+        lam[lam > 1/dt] = 1/dt
+            
+        n = np.random.binomial(n=1, p=dt*lam)
+
+        spkind = np.where(n > 0)[0]
+        for i in spkind:
+            spktimes.append([t*dt, i])
+            
+    spktimes = np.array(spktimes)
+    return v, spktimes
+
+
+def sim_lif_time_dep_perturbation(J, E, tstop=100, dt=.01, B=1, v_th=1, p=1, v_r=0, E_stim=None, perturb_ind=None):
+
+    '''
+    Simulate an LIF network with a perturbation to E.
+    If perturb_start=None, at times tstop/4 a postive perturbation is applied, and at 3/4 tstop a negative perturbation.
+
+    J: connectivity matrix, NxN
+    E: resting potential
+    '''
+
+    Nt = int(tstop / dt)
+
+    if len(np.shape(J)) > 1:
+        N = np.shape(J)[0]
+    else:
+        N = 1
+    
+    if len(np.shape(E)) == 0:
+        E0 = E * np.ones(N,)
+    elif len(E) == N:
+        E0 = np.array(E)
+    else:
+        raise Exception('Need either a scalar or length N input E')
+
+    if E_stim is None:
+        E_stim = np.zeros((Nt,))
+
+    if len(E_stim) != Nt:
+        raise Exception('Mismatched sim time and Estim, {} and {}'.format(Nt, len(E_stim)))
+
+
+    v = np.zeros((Nt,N))
+    v[0] = np.random.rand(N,)
+    n = np.zeros(N,)
+    spkind = []
+
+    spktimes = []
+
+    E = E0.copy()
+
+    for t in range(1, Nt):
+
+        E[perturb_ind] = E0[perturb_ind] + E_stim[t]
+
+        # v[t] = v[t-1] + dt*(-v[t-1] + E) - n*(v[t-1]-v_r) + J.dot(n) # approximate reset
+        v[t] = v[t-1] + dt*(-v[t-1] + E) + J.dot(n)
+        v[t, spkind] = v_r # reset
 
         lam = intensity(v[t], B=B, v_th=v_th, p=p)
         lam[lam > 1/dt] = 1/dt

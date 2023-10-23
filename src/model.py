@@ -1,5 +1,8 @@
 import numpy as np
 
+# def intensity(v, B=1, v_th=1):
+#     return np.exp(v-B)
+
 def intensity(v, B=1, v_th=1, p=1):
     x = v - v_th 
 
@@ -11,6 +14,9 @@ def intensity(v, B=1, v_th=1, p=1):
     
     return B * x**p
 
+
+# def intensity(v, B=1, v_th=1, p=1):
+#     return np.exp(B*(v-v_th))
 
 def intensity_match_linear_reset_mft(v, B=1, v_th=1, p=1):
 

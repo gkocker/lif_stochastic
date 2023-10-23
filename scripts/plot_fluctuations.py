@@ -797,9 +797,6 @@ def plot_ei_fluctuations_test(Ne=200, Ni=50, pE=0.5, pI=0.8, tstop=500, tstim=10
     fig.savefig(savefile)
 
 
-
 if __name__ == '__main__':
 
     plot_ei_fluctuations()
-    
-    # plot_propagators_resum()
