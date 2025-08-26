@@ -15,16 +15,15 @@ def intensity(v, B=1, v_th=1, p=1):
     return B * x**p
 
 def intensity_prime(v, B=1, v_th=1, p=1):
+
     x = v - v_th 
+    intensity_prime = B * p * x**(p-1)
 
     if len(np.shape(x)) > 0:
-        x[x < 0] = 0
-    elif x < 0:
-        x = 0
-    else: pass
-    
-    intensity_prime = B * p * x**(p-1)
-    intensity_prime[x < 0] = 0
+        intensity_prime[x < 0] = 0
+    else:
+        if x < 0:
+            intensity_prime = 0
 
     return intensity_prime
 
