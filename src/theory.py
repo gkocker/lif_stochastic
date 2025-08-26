@@ -38,7 +38,7 @@ def lif_linear_1loop_fI(Erange, B=1, v_th=1, p=1):
         intensitybar[i] = intensity(vbar[i], p=p, B=B, v_th=v_th)            
 
     vbar_pos = vbar.copy() - v_th
-    vbar_pos[vbar_pos < 0] = 0
+    vbar_pos[vbar_pos < 0] = 0  
 
     return intensitybar, intensitybar - intensitybar/8
 
